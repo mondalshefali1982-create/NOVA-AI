@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVA AI — Dashboard</title>
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+<div class="mobile-overlay" id="overlay"></div>
+
+<div class="app">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="sidebar-logo">NOVA AI</a>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Main</span>
+      <button class="nav-item active" data-panel="home">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-panel="chat">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        AI Chat
+        <span class="nav-badge">GPT-4</span>
+      </button>
+      <button class="nav-item" data-panel="tools">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        AI Tools
+      </button>
+
+      <span class="nav-section-label">Workspace</span>
+      <button class="nav-item" data-panel="tasks">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Tasks
+      </button>
+      <button class="nav-item" data-panel="prompts">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+        Saved Prompts
+      </button>
+
+      <span class="nav-section-label">System</span>
+      <button class="nav-item" data-panel="settings">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">N</div>
+        <div class="user-info">
+          <div class="user-name">Nova User</div>
+          <div class="user-plan">Pro Plan</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+        <span class="page-title" id="pageTitle">Dashboard</span>
+        <div class="topbar-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7a99" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search anything...">
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeToggleBtn" title="Toggle theme">🌙</button>
+        <button class="icon-btn" title="Notifications">🔔</button>
+        <a href="index.html" class="icon-btn" title="Home" style="text-decoration:none">🏠</a>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+      <!-- ─── HOME PANEL ─── -->
+      <div class="panel active" id="panel-home">
+
+        <div class="welcome-bar">
+          <div class="welcome-text">
+            <h2 id="greeting">Good morning ✨</h2>
+            <p>Here's what's happening with your AI workspace today.</p>
+          </div>
+          <button class="btn-primary btn" onclick="switchPanel('chat')" style="padding:0.6rem 1.2rem;background:linear-gradient(135deg,#6c63ff,#8b5cf6);border:none;border-radius:10px;color:white;font-family:'DM Sans',sans-serif;cursor:pointer">New Chat →</button>
+        </div>
+
+        <!-- MOTIVATION -->
+        <div class="motivation-card" id="motivationCard">
+          <p class="motivation-quote" id="quoteText">Loading your daily inspiration...</p>
+          <p class="motivation-author" id="quoteAuthor">— Fetching quote</p>
+        </div>
+
+        <!-- STAT CARDS -->
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-card-label">Messages Sent</div>
+            <div class="stat-card-value" id="msgCount">0</div>
+            <div class="stat-card-change">↑ This session</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Tasks Complete</div>
+            <div class="stat-card-value" id="taskCount">0</div>
+            <div class="stat-card-change">↑ Keep it up</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Saved Prompts</div>
+            <div class="stat-card-value" id="promptCount">0</div>
+            <div class="stat-card-change">↑ Prompt library</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">AI Requests</div>
+            <div class="stat-card-value">∞</div>
+            <div class="stat-card-change">Pro Plan active</div>
+          </div>
+        </div>
+
+        <!-- DASH GRID -->
+        <div class="dash-grid">
+          <!-- QUICK TOOLS -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Quick Tools</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.6rem">
+              <button onclick="startTool('caption')" style="background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:8px;padding:0.75rem 1rem;color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;text-align:left;transition:all 0.2s" onmouseover="this.style.background='rgba(108,99,255,0.18)'" onmouseout="this.style.background='rgba(108,99,255,0.08)'">📝 Caption Generator</button>
+              <button onclick="startTool('startup')" style="background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:8px;padding:0.75rem 1rem;color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;text-align:left;transition:all 0.2s" onmouseover="this.style.background='rgba(108,99,255,0.18)'" onmouseout="this.style.background='rgba(108,99,255,0.08)'">🚀 Startup Idea Generator</button>
+              <button onclick="startTool('prompt')" style="background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:8px;padding:0.75rem 1rem;color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;text-align:left;transition:all 0.2s" onmouseover="this.style.background='rgba(108,99,255,0.18)'" onmouseout="this.style.background='rgba(108,99,255,0.08)'">🎯 Prompt Generator</button>
+            </div>
+          </div>
+
+          <!-- ACTIVITY CHART -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Activity This Week</span>
+            </div>
+            <div class="mini-chart" id="activityChart"></div>
+          </div>
+
+          <!-- RECENT TASKS -->
+          <div class="card dash-grid-full">
+            <div class="card-header">
+              <span class="card-title">Recent Tasks</span>
+              <button class="card-action" onclick="switchPanel('tasks')">View all →</button>
+            </div>
+            <div id="recentTasks">
+              <p style="color:var(--text-muted);font-size:0.88rem">No tasks yet. Add some in the Tasks panel.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── CHAT PANEL ─── -->
+      <div class="panel" id="panel-chat">
+        <div class="api-key-section">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <input type="password" class="api-key-input" id="apiKeyInput" placeholder="Paste your OpenRouter API key (sk-or-...)">
+          <button onclick="saveApiKey()" style="padding:0.55rem 1.1rem;background:linear-gradient(135deg,#6c63ff,#8b5cf6);border:none;border-radius:8px;color:white;font-family:'DM Sans',sans-serif;font-size:0.83rem;cursor:pointer">Save Key</button>
+          <p class="api-notice">⚡ Get a free key at openrouter.ai — Your key is stored locally and never sent to our servers.</p>
+        </div>
+
+        <div class="chat-layout">
+          <div class="chat-messages" id="chatMessages">
+            <div class="message ai">
+              <div class="msg-avatar ai">N</div>
+              <div class="msg-bubble">
+                Hello! I'm <strong>NOVA</strong>, your AI productivity assistant. I can help you brainstorm ideas, write content, solve problems, or answer any questions. What would you like to work on today?
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-input-area">
+            <div class="chat-input-row">
+              <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask NOVA anything..."></textarea>
+              <button class="chat-send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+            </div>
+            <div class="chat-hints">
+              <span class="hint-chip" onclick="useHint(this)">Write a product description</span>
+              <span class="hint-chip" onclick="useHint(this)">Generate startup ideas</span>
+              <span class="hint-chip" onclick="useHint(this)">Help me brainstorm</span>
+              <span class="hint-chip" onclick="useHint(this)">Explain a concept simply</span>
+              <span class="hint-chip" onclick="useHint(this)">Write a cold email</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── TOOLS PANEL ─── -->
+      <div class="panel" id="panel-tools">
+        <div class="tools-panel-grid">
+          <div class="tool-panel-card" onclick="startTool('caption')">
+            <span class="tool-panel-icon">📝</span>
+            <div class="tool-panel-name">Caption Generator</div>
+            <p class="tool-panel-desc">Generate viral social media captions tailored to your brand voice.</p>
+          </div>
+          <div class="tool-panel-card" onclick="startTool('prompt')">
+            <span class="tool-panel-icon">🎯</span>
+            <div class="tool-panel-name">Prompt Generator</div>
+            <p class="tool-panel-desc">Generate optimized AI prompts for any task or model.</p>
+          </div>
+          <div class="tool-panel-card" onclick="startTool('startup')">
+            <span class="tool-panel-icon">🚀</span>
+            <div class="tool-panel-name">Startup Idea Generator</div>
+            <p class="tool-panel-desc">Get unique, market-validated startup ideas with full analysis.</p>
+          </div>
+          <div class="tool-panel-card" onclick="startTool('productivity')">
+            <span class="tool-panel-icon">📊</span>
+            <div class="tool-panel-name">Productivity Assistant</div>
+            <p class="tool-panel-desc">Optimize your workflow with AI-generated schedules and plans.</p>
+          </div>
+          <div class="tool-panel-card" onclick="startTool('writing')">
+            <span class="tool-panel-icon">✒️</span>
+            <div class="tool-panel-name">AI Writing Tool</div>
+            <p class="tool-panel-desc">Generate and refine any written content with your unique voice.</p>
+          </div>
+          <div class="tool-panel-card" onclick="startTool('workspace')">
+            <span class="tool-panel-icon">🌐</span>
+            <div class="tool-panel-name">Smart Workspace</div>
+            <p class="tool-panel-desc">An intelligent environment where AI assists you in real-time.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── TASKS PANEL ─── -->
+      <div class="panel" id="panel-tasks">
+        <div class="task-input-bar">
+          <input type="text" class="task-input" id="taskInput" placeholder="Add a new task and press Enter...">
+          <button onclick="addTask()" style="padding:0.7rem 1.3rem;background:linear-gradient(135deg,#6c63ff,#8b5cf6);border:none;border-radius:10px;color:white;font-family:'DM Sans',sans-serif;font-size:0.88rem;cursor:pointer">Add Task</button>
+        </div>
+        <div class="tasks-list" id="tasksList">
+          <div class="empty-state">
+            <span class="empty-icon">✅</span>
+            <p>No tasks yet. Add your first task above!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── PROMPTS PANEL ─── -->
+      <div class="panel" id="panel-prompts">
+        <div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center">
+          <p style="color:var(--text-muted);font-size:0.88rem">Prompts you've saved from AI Chat sessions.</p>
+          <button onclick="clearAllPrompts()" style="padding:0.45rem 0.9rem;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.25);border-radius:8px;color:#ff4d6d;font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer">Clear All</button>
+        </div>
+        <div class="prompts-grid" id="promptsGrid">
+          <div class="empty-state" style="grid-column:1/-1">
+            <span class="empty-icon">📚</span>
+            <p>No saved prompts yet. Use the AI Chat and save your favorite messages!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SETTINGS PANEL ─── -->
+      <div class="panel" id="panel-settings">
+        <div class="settings-group">
+          <h3>Appearance</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Dark Mode</h4>
+              <p>Use the dark futuristic theme</p>
+            </div>
+            <button class="toggle on" id="darkToggle" onclick="toggleSetting(this, 'darkMode')"></button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Glowing Effects</h4>
+              <p>Enable glow and blur animations</p>
+            </div>
+            <button class="toggle on" id="glowToggle" onclick="toggleSetting(this, 'glowMode')"></button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Compact Mode</h4>
+              <p>Reduce spacing for more content</p>
+            </div>
+            <button class="toggle" id="compactToggle" onclick="toggleSetting(this, 'compactMode')"></button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>AI Preferences</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Auto-Save Prompts</h4>
+              <p>Automatically save all AI conversations</p>
+            </div>
+            <button class="toggle" id="autoSaveToggle" onclick="toggleSetting(this, 'autoSave')"></button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Daily Motivation</h4>
+              <p>Show inspirational quotes on dashboard</p>
+            </div>
+            <button class="toggle on" id="motivToggle" onclick="toggleSetting(this, 'motivation')"></button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>API Configuration</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>OpenRouter API Key</h4>
+              <p>Required for AI Chat functionality</p>
+            </div>
+            <button onclick="switchPanel('chat')" style="padding:0.4rem 0.9rem;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);border-radius:8px;color:var(--purple);font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer">Configure →</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>Data</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <h4>Clear All Data</h4>
+              <p>Delete all tasks, prompts, and preferences</p>
+            </div>
+            <button onclick="clearAllData()" style="padding:0.4rem 0.9rem;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.25);border-radius:8px;color:#ff4d6d;font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer">Clear All</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
