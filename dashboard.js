@@ -3,7 +3,7 @@ const state = {
   tasks: JSON.parse(localStorage.getItem('nova_tasks') || '[]'),
   prompts: JSON.parse(localStorage.getItem('nova_prompts') || '[]'),
   settings: JSON.parse(localStorage.getItem('nova_settings') || '{"darkMode":true,"glowMode":true,"compactMode":false,"autoSave":false,"motivation":true}'),
-  apiKey: localStorage.getItem('nova_api_key') || '',
+  apiKey: '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',
   messages: [{ role: 'system', content: 'You are NOVA, a helpful and intelligent AI productivity assistant. You help users brainstorm ideas, write content, solve problems, analyze data, and optimize their workflows. Be concise, insightful, and practical. Format responses clearly.' }],
   msgSentCount: 0,
   isTyping: false
