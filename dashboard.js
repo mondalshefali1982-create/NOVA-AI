@@ -197,7 +197,7 @@ async function sendMessage() {
         'X-Title': 'NOVA AI Dashboard'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo',
+        model: 'deepseek/deepseek-chat-v3-0324:free',
         messages: state.messages,
         max_tokens: 800,
         temperature: 0.8
