@@ -197,7 +197,7 @@ async function sendMessage() {
         'X-Title': 'NOVA AI Dashboard'
       },
       body: JSON.stringify({
-        model: 'mistralai/mistral-7b-instruct',
+        model: 'google/gemma-2-9b-it:free',
         messages: state.messages,
         max_tokens: 800,
         temperature: 0.8
