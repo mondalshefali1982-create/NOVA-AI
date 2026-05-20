@@ -197,7 +197,7 @@ async function sendMessage() {
         'X-Title': 'NOVA AI Dashboard'
       },
       body: JSON.stringify({
-        model: 'google/gemma-2-9b-it:free',
+        model: 'openrouter/auto',
         messages: state.messages,
         max_tokens: 800,
         temperature: 0.8
