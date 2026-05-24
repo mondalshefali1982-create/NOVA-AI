@@ -1786,3 +1786,132 @@ body[data-accent="indigo"] {
     transition-duration: 1ms !important;
   }
 }
+/* your existing css above */
+
+
+/* =========================
+   MOBILE RESPONSIVE FIX
+========================= */
+
+@media (max-width: 980px) {
+
+  .dashboard-body {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 280px;
+    max-width: 85%;
+    height: 100vh;
+    z-index: 999;
+    transition: left 0.3s ease;
+  }
+
+  .dashboard-sidebar.open {
+    left: 0;
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.3s;
+    z-index: 998;
+  }
+
+  .sidebar-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar-close {
+    display: grid;
+  }
+
+  .dashboard-main {
+    width: 100%;
+    padding: 14px;
+  }
+
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-messages {
+    max-height: 45vh;
+  }
+
+  .message {
+    max-width: 100%;
+  }
+
+  .topbar-actions {
+    display: none;
+  }
+
+  .dashboard-topbar {
+    padding: 14px;
+  }
+
+  .full-chat {
+    min-height: auto;
+  }
+
+  body.sidebar-open {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 600px) {
+
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-main {
+    padding: 10px;
+  }
+
+  .dash-card {
+    padding: 14px;
+  }
+
+  .dashboard-topbar h1 {
+    font-size: 1.4rem;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chat-form {
+    flex-direction: column;
+  }
+
+  .chat-form button {
+    width: 100%;
+  }
+
+}
