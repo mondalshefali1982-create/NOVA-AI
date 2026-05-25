@@ -706,9 +706,17 @@ function setGreeting() {
 
 function dismissLoader() {
   if (!startupLoader) return;
-  window.setTimeout(() => {
-    startupLoader.classList.add("hidden");
-  }, 850);
+
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      startupLoader.style.opacity = "0";
+      startupLoader.style.pointerEvents = "none";
+
+      setTimeout(() => {
+        startupLoader.style.display = "none";
+      }, 500);
+    }, 1200);
+  });
 }
 
 function updateCounters() {
