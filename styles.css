@@ -2123,7 +2123,7 @@ body[data-accent="indigo"] {
   }
 }
 
-.startup-loader {
+.startup-loader {   display: none; } {
   position: fixed;
   inset: 0;
   z-index: 100;
