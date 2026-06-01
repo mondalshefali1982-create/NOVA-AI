@@ -1,6 +1,6 @@
-const FREE_AI_ENDPOINT = "https://text.pollinations.ai/openai";
-const FREE_AI_MODEL = "openai";
-
+const GEMINI_API_KEY = "AQ.Ab8RN6IHE594NA4MT9POEmnULdX0yeK0GeMxIOGZksXGVtdljg";
+const GEMINI_ENDPOINT =
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 const store = {
   get(key, fallback) {
     try {
@@ -286,19 +286,39 @@ function restoreChat() {
 }
 
 async function askFreeAI(message) {
-  const response = await fetch(FREE_AI_ENDPOINT, {
+  const response = await fetch(GEMINI_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: FREE_AI_MODEL,
-      messages: [
-        { role: "system", content: "You are NOVA AI, a concise productivity assistant for founders and teams." },
-        { role: "user", content: message }
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `You are NOVA AI, a professional productivity assistant.
+
+User request:
+${message}`
+            }
+          ]
+        }
       ]
     })
   });
+
+  if (!response.ok) {
+    throw new Error("Gemini request failed");
+  }
+
+  const data = await response.json();
+
+  return (
+    data.candidates?.[0]?.content?.parts?.[0]?.text ||
+    "No response received from Gemini."
+  );
+}
 
   if (!response.ok) {
     throw new Error("NOVA could not reach the free AI service right now. Try again in a moment.");
