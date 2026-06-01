@@ -189,13 +189,28 @@ document.getElementById("clearPrompts")?.addEventListener("click", () => {
 document.getElementById("refreshQuote")?.addEventListener("click", loadQuote);
 
 document.querySelectorAll(".dashboard-tools .tool-card button").forEach((button) => {
-  button.addEventListener("click", () => {
+  button.addEventListener("click", async () => {
     const card = button.closest(".tool-card");
     const textarea = card.querySelector("textarea");
     const type = textarea.dataset.template;
-    const input = textarea.value.trim() || "a new AI productivity workflow";
-    state.generatedPrompt = templates[type](input);
-    generatedPrompt.textContent = state.generatedPrompt;
+
+    const input =
+      textarea.value.trim() ||
+      "a new AI productivity workflow";
+
+    const prompt = templates[type](input);
+
+    generatedPrompt.textContent = "NOVA is thinking...";
+
+    try {
+      const result = await askFreeAI(prompt);
+
+      state.generatedPrompt = result;
+      generatedPrompt.textContent = result;
+    } catch (error) {
+      generatedPrompt.textContent =
+        "Failed to generate AI response.";
+    }
   });
 });
 
