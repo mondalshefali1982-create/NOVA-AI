@@ -1,4 +1,4 @@
-const GEMINI_API_KEY = "AQ.Ab8RN6IHE594NA4MT9POEmnULdX0yeK0GeMxIOGZksXGVtdljg";
+const GEMINI_API_KEY = "";
 const GEMINI_ENDPOINT =
   `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 const store = {
