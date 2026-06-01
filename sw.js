@@ -1,4 +1,4 @@
-const NOVA_CACHE = "nova-ai-v5-secure-gemini";
+const NOVA_CACHE = "nova-ai-v6-backend-config";
 const ASSETS = [
   "./",
   "index.html",
@@ -6,6 +6,7 @@ const ASSETS = [
   "styles.css",
   "main.js",
   "dashboard.js",
+  "config.js",
   "manifest.json"
 ];
 
