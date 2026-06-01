@@ -1,5 +1,5 @@
-const GEMINI_MODEL = "gemini-2.0-flash";
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const OPENROUTER_MODEL = "deepseek/deepseek-chat-v3-0324:free";
+const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.ALLOWED_ORIGIN || "*");
@@ -37,50 +37,45 @@ function getBody(req) {
 }
 
 async function callGemini(prompt, options = {}) {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
   if (!apiKey) {
-    const error = new Error("Missing GEMINI_API_KEY environment variable.");
+    const error = new Error("Missing OPENROUTER_API_KEY environment variable.");
     error.statusCode = 500;
     throw error;
   }
 
-  const payload = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: prompt }]
-      }
-    ],
-    generationConfig: {
-      temperature: options.temperature ?? 0.7,
-      maxOutputTokens: options.maxOutputTokens ?? 900,
-      responseMimeType: options.responseMimeType || "text/plain"
-    }
-  };
-
-  if (options.systemInstruction) {
-    payload.systemInstruction = {
-      parts: [{ text: options.systemInstruction }]
-    };
-  }
-
-  const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
+      "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      model: "deepseek/deepseek-chat-v3-0324:free",
+      messages: [
+        {
+          role: "system",
+          content: options.systemInstruction || "You are NOVA AI."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    })
   });
 
   if (!response.ok) {
     const details = await response.text();
-    const error = new Error(`Gemini request failed: ${details}`);
+    const error = new Error(`OpenRouter request failed: ${details}`);
     error.statusCode = response.status;
     throw error;
   }
 
   const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim() || "";
+
+  return data.choices?.[0]?.message?.content?.trim() || "";
 }
 
 function sendError(res, error) {
