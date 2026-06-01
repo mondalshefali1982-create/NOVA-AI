@@ -1,4 +1,4 @@
-const NOVA_BACKEND_BASE_URL = "";
+const NOVA_BACKEND_BASE_URL = (window.NOVA_BACKEND_BASE_URL || "").replace(/\/$/, "");
 const NOVA_API_ROUTES = {
   chat: "/api/gemini/chat",
   document: "/api/gemini/document",
