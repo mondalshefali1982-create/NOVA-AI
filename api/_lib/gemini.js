@@ -1,4 +1,4 @@
-const OPENROUTER_MODEL = "deepseek/deepseek-chat-v3-0324:free";
+const OPENROUTER_MODEL = "google/gemma-4-31b-it:free";
 const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
 function setCors(res) {
