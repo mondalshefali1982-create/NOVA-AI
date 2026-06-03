@@ -154,7 +154,7 @@ chatForm?.addEventListener("submit", async (event) => {
     updateCounters();
   } catch (error) {
     typing.remove();
-    const fallback = buildFallbackResponse(message);
+    const fallback = buildFallbackResponse();
     const aiMessage = addMessage(chatMessages, "ai", "");
     await streamMessage(aiMessage, fallback);
     saveChatMessage("ai", fallback);
@@ -194,22 +194,17 @@ document.querySelectorAll(".dashboard-tools .tool-card button").forEach((button)
     const textarea = card.querySelector("textarea");
     const type = textarea.dataset.template;
 
-    const input =
-      textarea.value.trim() ||
-      "a new AI productivity workflow";
-
+    const input = textarea.value.trim() || "a new AI productivity workflow";
     const prompt = templates[type](input);
 
     generatedPrompt.textContent = "NOVA is thinking...";
 
     try {
       const result = await askFreeAI(prompt);
-
       state.generatedPrompt = result;
-      generatedPrompt.textContent = result;
+      generatedPrompt.innerHTML = parseMarkdown(result);
     } catch (error) {
-      generatedPrompt.textContent =
-        "Failed to generate AI response.";
+      generatedPrompt.textContent = "The AI service is temporarily unavailable. Please try again shortly.";
     }
   });
 });
@@ -323,21 +318,57 @@ async function callNovaBackend(route, payload) {
   });
 
   if (!response.ok) {
-    throw new Error("NOVA could not reach the secure Gemini backend right now.");
+    throw new Error("The AI service is temporarily unavailable. Please try again shortly.");
   }
 
   return response.json();
 }
 
-function buildFallbackResponse(message) {
-  return `"The AI provider is temporarily busy. Please try again in a few moments.". Local NOVA fallback for "${message}": clarify the goal, break it into 3 focused tasks, choose the fastest first step, and save the best prompt so you can reuse it later.`;
+function buildFallbackResponse() {
+  return "The AI service is currently processing a high volume of requests and is temporarily unavailable.\n\nWhile we restore connectivity, you can review your saved tasks, check your planner, or try your request again in a few moments.";
+}
+
+function parseMarkdown(text) {
+  if (!text) return "";
+
+  let html = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  html = html.replace(/^[\s]*[-*]\s+(.*)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+  html = html.replace(/^[\s]*\d+\.\s+(.*)$/gm, '<li class="numbered">$1</li>');
+  html = html.replace(/(<li class="numbered">.*<\/li>\n?)+/g, '<ol>$&</ol>');
+  html = html.replace(/<li class="numbered">/g, '<li>');
+
+  html = html.split(/\n\n+/).map(p => {
+    if (p.trim().startsWith('<ul') || p.trim().startsWith('<ol') || p.trim().startsWith('<pre')) return p;
+    return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+  }).join('');
+
+  return html;
 }
 
 function addMessage(container, type, text) {
   if (!container) return null;
   const message = document.createElement("div");
   message.className = `message ${type}`;
-  message.textContent = text;
+  
+  if (text) {
+    if (type === "ai") {
+      message.innerHTML = parseMarkdown(text);
+    } else {
+      message.textContent = text;
+    }
+  }
+  
   container.appendChild(message);
   trimMessages(container);
   container.scrollTop = container.scrollHeight;
@@ -346,14 +377,20 @@ function addMessage(container, type, text) {
 
 async function streamMessage(element, text) {
   if (!element) return;
-  element.textContent = "";
-  const chunkSize = text.length > 220 ? 4 : 2;
-
+  element.innerHTML = "";
+  
+  let currentText = "";
+  const chunkSize = text.length > 500 ? 20 : (text.length > 200 ? 10 : 4);
+  
   for (let index = 0; index < text.length; index += chunkSize) {
-    element.textContent += text.slice(index, index + chunkSize);
+    currentText += text.slice(index, index + chunkSize);
+    element.innerHTML = parseMarkdown(currentText);
     element.parentElement.scrollTop = element.parentElement.scrollHeight;
-    await wait(12);
+    await wait(10);
   }
+  
+  element.innerHTML = parseMarkdown(text);
+  element.parentElement.scrollTop = element.parentElement.scrollHeight;
 }
 
 function saveChatMessage(type, text) {
@@ -516,9 +553,9 @@ function toggleVoiceMode() {
     recognition.onresult = async (event) => {
       const transcript = event.results[0][0].transcript;
       voiceStatus.textContent = `You said: ${transcript}`;
-      const response = await askFreeAI(transcript).catch(() => buildFallbackResponse(transcript));
-      voiceStatus.textContent = response;
-      speakResponse(response);
+      const response = await askFreeAI(transcript).catch(() => buildFallbackResponse());
+      voiceStatus.innerHTML = parseMarkdown(response);
+      speakResponse(response.replace(/[*_`#]/g, ''));
       saveChatMessage("user", transcript);
       saveChatMessage("ai", response);
     };
@@ -606,11 +643,10 @@ function addTypingMessage(container) {
 }
 
 function trimMessages(container) {
-  while (container.children.length > 8) {
+  while (container.children.length > 100) {
     container.removeChild(container.firstElementChild);
   }
 }
-
 function renderTasks() {
   taskList.innerHTML = "";
   if (!state.tasks.length) {
@@ -759,22 +795,22 @@ async function generateDocument() {
   } catch (error) {
     output = createLocalDocument(type, input);
   }
-  document.getElementById("docOutput").textContent = output;
+  document.getElementById("docOutput").innerHTML = parseMarkdown(output);
   state.prompts.unshift({ id: crypto.randomUUID(), text: `Generated ${type}: ${input}`, createdAt: Date.now() });
   persistPrompts();
 }
 
 function createLocalDocument(type, input) {
-  return `NOVA ${type.toUpperCase()}\n\nObjective:\n${input}\n\nSuggested Structure:\n1. Start with a clear hook and context.\n2. Present the most important achievement or value proposition.\n3. Add specific proof, metrics, or examples.\n4. Close with a confident next step.\n\nPolished Draft:\nDear reader,\n\nI am sharing this ${type} to communicate a focused, high-quality outcome around ${input}. The goal is to make the message concise, useful, and professional while keeping a premium tone.\n\nKey points:\n- Clear purpose and audience fit\n- Strong opening statement\n- Practical evidence and outcomes\n- Confident call to action\n\nBest,\nNOVA AI`;
+  return `NOVA ${type.toUpperCase()}\n\n**Objective:**\n${input}\n\n**Suggested Structure:**\n1. Start with a clear hook and context.\n2. Present the most important achievement or value proposition.\n3. Add specific proof, metrics, or examples.\n4. Close with a confident next step.\n\n**Polished Draft:**\nDear reader,\n\nI am sharing this ${type} to communicate a focused, high-quality outcome around ${input}. The goal is to make the message concise, useful, and professional while keeping a premium tone.\n\n**Key points:**\n- Clear purpose and audience fit\n- Strong opening statement\n- Practical evidence and outcomes\n- Confident call to action\n\nBest,\nNOVA AI`;
 }
 
 async function copyDocument() {
-  const text = document.getElementById("docOutput").textContent;
+  const text = document.getElementById("docOutput").innerText;
   await navigator.clipboard?.writeText(text);
 }
 
 function downloadDocument() {
-  const text = document.getElementById("docOutput").textContent;
+  const text = document.getElementById("docOutput").innerText;
   const blob = new Blob([text], { type: "text/plain" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
