@@ -1,4 +1,4 @@
-const OPENROUTER_MODEL = "google/gemma-4-31b-it:free";
+const OPENROUTER_MODEL = "google/gemma-4-26b-a4b-it:free";
 const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
 function setCors(res) {
