@@ -6,13 +6,11 @@ const NOVA_API_ROUTES = {
   image: "/api/gemini/image"
 };
 
-// ─── Local Storage Helpers ────────────────────────────────────────────────────
-
 const store = {
   get(key, fallback) {
     try {
       return JSON.parse(localStorage.getItem(key)) ?? fallback;
-    } catch {
+    } catch (error) {
       return fallback;
     }
   },
@@ -21,21 +19,12 @@ const store = {
   }
 };
 
-// ─── Application State ────────────────────────────────────────────────────────
-
 const state = {
   tasks: store.get("novaTasks", []),
   prompts: store.get("novaPrompts", []),
   conversations: store.get("novaConversations", []),
   activeConversationId: localStorage.getItem("novaActiveConversationId") || "",
-  settings: store.get("novaSettings", {
-    light: false,
-    compact: false,
-    accent: "violet",
-    wallpaper: "mesh",
-    language: "en",
-    mode: "freelancer"
-  }),
+  settings: store.get("novaSettings", { light: false, compact: false, accent: "violet", wallpaper: "mesh", language: "en", mode: "freelancer" }),
   images: store.get("novaImages", []),
   planner: store.get("novaPlanner", []),
   profile: store.get("novaProfile", {}),
@@ -43,8 +32,6 @@ const state = {
   lastUserPrompt: "",
   generatedPrompt: ""
 };
-
-// ─── DOM References ───────────────────────────────────────────────────────────
 
 const panels = document.querySelectorAll(".dashboard-panel");
 const navLinks = document.querySelectorAll("[data-panel]");
@@ -76,20 +63,12 @@ const voiceOrb = document.getElementById("voiceOrb");
 let recognition = null;
 let isListening = false;
 
-// ─── AI Studio Templates ──────────────────────────────────────────────────────
-
 const templates = {
-  caption: (input) =>
-    `Create 5 premium social captions for: ${input}. Include hooks, concise body copy, and a confident call to action.`,
-  prompt: (input) =>
-    `Act as an expert prompt engineer. Build a structured reusable prompt for this goal: ${input}. Include context, task, constraints, output format, and quality checks.`,
-  startup: (input) =>
-    `Generate 7 startup ideas for: ${input}. For each, include target user, pain point, MVP, pricing angle, and first validation step.`,
-  writing: (input) =>
-    `Rewrite the following copy so it is clearer, more persuasive, and more premium while preserving meaning: ${input}.`
+  caption: (input) => `Create 5 premium social captions for: ${input}. Include hooks, concise body copy, and a confident call to action.`,
+  prompt: (input) => `Act as an expert prompt engineer. Build a structured reusable prompt for this goal: ${input}. Include context, task, constraints, output format, and quality checks.`,
+  startup: (input) => `Generate 7 startup ideas for: ${input}. For each, include target user, pain point, MVP, pricing angle, and first validation step.`,
+  writing: (input) => `Rewrite the following copy so it is clearer, more persuasive, and more premium while preserving meaning: ${input}.`
 };
-
-// ─── Initialisation ───────────────────────────────────────────────────────────
 
 createParticles();
 addCursorGlow();
@@ -103,8 +82,6 @@ renderPlanner();
 activatePanelFromHash();
 dismissLoader();
 registerServiceWorker();
-
-// ─── Navigation ───────────────────────────────────────────────────────────────
 
 window.addEventListener("hashchange", activatePanelFromHash);
 
@@ -132,20 +109,17 @@ document.querySelectorAll("[data-panel-target]").forEach((button) => {
   });
 });
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
 sidebarToggle?.addEventListener("click", () => {
-  setSidebarState(!sidebar?.classList.contains("open"));
+  const isOpen = !sidebar?.classList.contains("open");
+  setSidebarState(isOpen);
 });
 
 sidebarOverlay?.addEventListener("click", closeSidebar);
 sidebarClose?.addEventListener("click", closeSidebar);
 
 window.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    closeSidebar();
-    closeCommandPalette();
-  }
+  if (event.key === "Escape") closeSidebar();
+  if (event.key === "Escape") closeCommandPalette();
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
     openCommandPalette();
@@ -156,8 +130,6 @@ window.addEventListener("resize", () => {
   if (window.innerWidth > 980) closeSidebar();
 });
 
-// ─── Chat ─────────────────────────────────────────────────────────────────────
-
 chatForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const message = chatInput.value.trim();
@@ -165,12 +137,9 @@ chatForm?.addEventListener("submit", async (event) => {
 
   state.lastUserPrompt = message;
   chatInput.value = "";
-  autoResizeInput();
-
   addMessage(chatMessages, "user", message);
   addMessage(overviewMessages, "user", message);
   saveChatMessage("user", message);
-
   const typing = addTypingMessage(chatMessages);
 
   try {
@@ -183,30 +152,14 @@ chatForm?.addEventListener("submit", async (event) => {
     state.requestCount += 1;
     localStorage.setItem("novaRequestCount", String(state.requestCount));
     updateCounters();
-  } catch {
+  } catch (error) {
     typing.remove();
-    const fallback = buildFallbackResponse(message);
+    const fallback = buildFallbackResponse();
     const aiMessage = addMessage(chatMessages, "ai", "");
     await streamMessage(aiMessage, fallback);
     saveChatMessage("ai", fallback);
   }
 });
-
-chatInput?.addEventListener("input", autoResizeInput);
-chatInput?.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    chatForm?.dispatchEvent(new Event("submit", { cancelable: true }));
-  }
-});
-
-function autoResizeInput() {
-  if (!chatInput) return;
-  chatInput.style.height = "auto";
-  chatInput.style.height = `${Math.min(chatInput.scrollHeight, 160)}px`;
-}
-
-// ─── Tasks ────────────────────────────────────────────────────────────────────
 
 taskForm?.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -217,11 +170,12 @@ taskForm?.addEventListener("submit", (event) => {
   persistTasks();
 });
 
-// ─── Prompts ──────────────────────────────────────────────────────────────────
-
 document.getElementById("saveLastPrompt")?.addEventListener("click", () => {
   if (state.lastUserPrompt) savePrompt(state.lastUserPrompt);
 });
+
+document.getElementById("newChatBtn")?.addEventListener("click", startNewChat);
+document.getElementById("clearAllChatsBtn")?.addEventListener("click", clearAllChats);
 
 document.getElementById("saveGeneratedPrompt")?.addEventListener("click", () => {
   if (state.generatedPrompt) savePrompt(state.generatedPrompt);
@@ -232,35 +186,28 @@ document.getElementById("clearPrompts")?.addEventListener("click", () => {
   persistPrompts();
 });
 
-// ─── Conversations ────────────────────────────────────────────────────────────
-
-document.getElementById("newChatBtn")?.addEventListener("click", startNewChat);
-document.getElementById("clearAllChatsBtn")?.addEventListener("click", clearAllChats);
-
-// ─── AI Studio ────────────────────────────────────────────────────────────────
+document.getElementById("refreshQuote")?.addEventListener("click", loadQuote);
 
 document.querySelectorAll(".dashboard-tools .tool-card button").forEach((button) => {
   button.addEventListener("click", async () => {
     const card = button.closest(".tool-card");
     const textarea = card.querySelector("textarea");
     const type = textarea.dataset.template;
+
     const input = textarea.value.trim() || "a new AI productivity workflow";
     const prompt = templates[type](input);
 
-    generatedPrompt.textContent = "NOVA is thinking…";
+    generatedPrompt.textContent = "NOVA is thinking...";
 
     try {
       const result = await askFreeAI(prompt);
       state.generatedPrompt = result;
-      renderFormattedText(generatedPrompt, result);
-    } catch {
-      generatedPrompt.textContent =
-        "NOVA couldn't generate a response right now. Please try again in a moment.";
+      generatedPrompt.innerHTML = parseMarkdown(result);
+    } catch (error) {
+      generatedPrompt.textContent = "The AI service is temporarily unavailable. Please try again shortly.";
     }
   });
 });
-
-// ─── Settings ────────────────────────────────────────────────────────────────
 
 document.getElementById("themeToggle")?.addEventListener("change", (event) => {
   state.settings.light = event.target.checked;
@@ -293,8 +240,6 @@ document.getElementById("modeSelect")?.addEventListener("change", (event) => {
   updateModeSuggestion();
 });
 
-// ─── Feature Buttons ─────────────────────────────────────────────────────────
-
 document.getElementById("generateDocBtn")?.addEventListener("click", generateDocument);
 document.getElementById("copyDocBtn")?.addEventListener("click", copyDocument);
 document.getElementById("downloadDocBtn")?.addEventListener("click", downloadDocument);
@@ -302,10 +247,7 @@ document.getElementById("generateImageBtn")?.addEventListener("click", generateI
 document.getElementById("generatePlanBtn")?.addEventListener("click", generatePlan);
 document.getElementById("exportMemoryBtn")?.addEventListener("click", exportMemory);
 document.getElementById("commandPill")?.addEventListener("click", openCommandPalette);
-document.getElementById("refreshQuote")?.addEventListener("click", loadQuote);
 voiceToggle?.addEventListener("click", toggleVoiceMode);
-
-// ─── Profile ─────────────────────────────────────────────────────────────────
 
 document.getElementById("authForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -314,19 +256,14 @@ document.getElementById("authForm")?.addEventListener("submit", (event) => {
     email: document.getElementById("profileEmail").value.trim()
   };
   store.set("novaProfile", state.profile);
-  document.getElementById("profileStatus").textContent =
-    `Profile saved for ${state.profile.name || "NOVA user"}.`;
+  document.getElementById("profileStatus").textContent = `Profile saved for ${state.profile.name || "NOVA user"}.`;
 });
-
-// ─── Command Palette ─────────────────────────────────────────────────────────
 
 commandPalette?.addEventListener("click", (event) => {
   if (event.target === commandPalette) closeCommandPalette();
 });
 
 commandInput?.addEventListener("input", renderCommands);
-
-// ─── Panel Management ─────────────────────────────────────────────────────────
 
 function activatePanelFromHash() {
   const requested = window.location.hash.replace("#", "") || "overview";
@@ -337,51 +274,46 @@ function activatePanel(id) {
   const validPanel = document.getElementById(id) ? id : "overview";
   panels.forEach((panel) => panel.classList.toggle("active", panel.id === validPanel));
   navLinks.forEach((link) => link.classList.toggle("active", link.dataset.panel === validPanel));
-  mobileNavLinks.forEach((link) =>
-    link.classList.toggle("active", link.dataset.mobilePanel === validPanel)
-  );
+  mobileNavLinks.forEach((link) => link.classList.toggle("active", link.dataset.mobilePanel === validPanel));
 }
-
-// ─── Sidebar Management ───────────────────────────────────────────────────────
 
 function setSidebarState(isOpen) {
   sidebar?.classList.toggle("open", isOpen);
   sidebarOverlay?.classList.toggle("open", isOpen);
   document.body.classList.toggle("sidebar-open", isOpen);
   sidebarToggle?.setAttribute("aria-expanded", String(isOpen));
-  sidebarToggle?.setAttribute(
-    "aria-label",
-    isOpen ? "Close dashboard menu" : "Open dashboard menu"
-  );
+  sidebarToggle?.setAttribute("aria-label", isOpen ? "Close dashboard menu" : "Open dashboard menu");
 }
 
 function closeSidebar() {
   setSidebarState(false);
 }
 
-// ─── Chat & Conversations ─────────────────────────────────────────────────────
-
 function restoreChat() {
   migrateSingleChatHistory();
+
   if (!state.activeConversationId || !getActiveConversation()) {
     createConversation("New chat");
   }
+
   renderActiveConversation();
   renderConversationList();
 }
 
 async function askFreeAI(message) {
-  const response = await callNovaBackend(NOVA_API_ROUTES.chat, {
+  const backendResponse = await callNovaBackend(NOVA_API_ROUTES.chat, {
     message,
     history: getActiveConversation()?.messages.slice(-8) || []
   });
-  return response.text;
+  return backendResponse.text;
 }
 
 async function callNovaBackend(route, payload) {
   const response = await fetch(`${NOVA_BACKEND_BASE_URL}${route}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify(payload)
   });
 
@@ -392,216 +324,74 @@ async function callNovaBackend(route, payload) {
   return response.json();
 }
 
-function buildFallbackResponse(message) {
-  return `I'm having trouble reaching the AI service right now.\n\nHere's a quick framework to move forward with **"${message}"**:\n\n1. **Clarify the goal** — What's the single most important outcome?\n2. **Break it down** — Identify 3 focused next steps.\n3. **Start with the fastest win** — Pick the step you can complete right now.\n4. **Save your best prompt** — Use the prompt library to reuse this later.\n\nTry again in a moment and NOVA will give you a full response.`;
+function buildFallbackResponse() {
+  return "The AI service is currently processing a high volume of requests and is temporarily unavailable.\n\nWhile we restore connectivity, you can review your saved tasks, check your planner, or try your request again in a few moments.";
 }
 
-// ─── Message Rendering ────────────────────────────────────────────────────────
-
-/**
- * Converts markdown-like text into clean HTML for chat messages.
- * Supports: bold, italic, inline code, code blocks, ordered/unordered lists,
- * blockquotes, headings, horizontal rules, and paragraphs.
- */
 function parseMarkdown(text) {
   if (!text) return "";
 
-  let html = text;
+  let html = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 
-  // Escape HTML entities first (only for non-markdown characters to avoid double escaping)
-  // We'll escape within code blocks separately below
+  html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
-  // Fenced code blocks (``` lang\n...\n```)
-  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-    const escaped = escapeHtml(code.trim());
-    const langLabel = lang ? `<span class="nova-code-lang">${escapeHtml(lang)}</span>` : "";
-    return `<div class="nova-code-block">${langLabel}<pre><code>${escaped}</code></pre></div>`;
-  });
+  html = html.replace(/^[\s]*[-*]\s+(.*)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
 
-  // Inline code
-  html = html.replace(/`([^`\n]+)`/g, (_, code) => {
-    return `<code class="nova-inline-code">${escapeHtml(code)}</code>`;
-  });
+  html = html.replace(/^[\s]*\d+\.\s+(.*)$/gm, '<li class="numbered">$1</li>');
+  html = html.replace(/(<li class="numbered">.*<\/li>\n?)+/g, '<ol>$&</ol>');
+  html = html.replace(/<li class="numbered">/g, '<li>');
 
-  // Headings (### ## #)
-  html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
-  html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-  html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>");
-
-  // Horizontal rule
-  html = html.replace(/^---+$/gm, "<hr>");
-
-  // Blockquotes
-  html = html.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
-
-  // Bold + italic (***text***)
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
-
-  // Bold (**text** or __text__)
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/__(.+?)__/g, "<strong>$1</strong>");
-
-  // Italic (*text* or _text_)
-  html = html.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
-  html = html.replace(/_([^_\n]+)_/g, "<em>$1</em>");
-
-  // Unordered lists (lines starting with - or *)
-  html = html.replace(/((?:^[\s]*[-*] .+\n?)+)/gm, (block) => {
-    const items = block
-      .trim()
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => `<li>${line.replace(/^[\s]*[-*] /, "")}</li>`)
-      .join("");
-    return `<ul>${items}</ul>`;
-  });
-
-  // Ordered lists (lines starting with 1. 2. etc.)
-  html = html.replace(/((?:^[\s]*\d+\. .+\n?)+)/gm, (block) => {
-    const items = block
-      .trim()
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => `<li>${line.replace(/^[\s]*\d+\. /, "")}</li>`)
-      .join("");
-    return `<ol>${items}</ol>`;
-  });
-
-  // Paragraphs: split on double newlines, wrap non-block elements
-  const blockTags = /^<(h[1-6]|ul|ol|li|blockquote|pre|div|hr)/;
-  html = html
-    .split(/\n{2,}/)
-    .map((segment) => {
-      const trimmed = segment.trim();
-      if (!trimmed) return "";
-      if (blockTags.test(trimmed)) return trimmed;
-      // Single line breaks within a paragraph → <br>
-      return `<p>${trimmed.replace(/\n/g, "<br>")}</p>`;
-    })
-    .filter(Boolean)
-    .join("\n");
+  html = html.split(/\n\n+/).map(p => {
+    if (p.trim().startsWith('<ul') || p.trim().startsWith('<ol') || p.trim().startsWith('<pre')) return p;
+    return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+  }).join('');
 
   return html;
 }
 
-/**
- * Renders formatted markdown content into a container element.
- */
-function renderFormattedText(container, text) {
-  if (!container) return;
-  container.innerHTML = parseMarkdown(text);
-  container.classList.add("nova-formatted");
-}
-
-/**
- * Adds a message bubble to a container. AI messages are rendered with markdown.
- */
 function addMessage(container, type, text) {
   if (!container) return null;
-
-  const wrapper = document.createElement("div");
-  wrapper.className = `message-wrapper ${type}`;
-
-  const bubble = document.createElement("div");
-  bubble.className = `message ${type}`;
-
-  if (type === "ai" && text) {
-    bubble.innerHTML = parseMarkdown(text);
-    bubble.classList.add("nova-formatted");
-  } else {
-    bubble.textContent = text;
+  const message = document.createElement("div");
+  message.className = `message ${type}`;
+  
+  if (text) {
+    if (type === "ai") {
+      message.innerHTML = parseMarkdown(text);
+    } else {
+      message.textContent = text;
+    }
   }
-
-  wrapper.appendChild(bubble);
-
-  if (type === "ai" && text) {
-    const actions = buildMessageActions(text);
-    wrapper.appendChild(actions);
-  }
-
-  container.appendChild(wrapper);
+  
+  container.appendChild(message);
   trimMessages(container);
   container.scrollTop = container.scrollHeight;
-  return bubble;
+  return message;
 }
 
-/**
- * Builds copy/thumbs action bar for AI messages.
- */
-function buildMessageActions(text) {
-  const bar = document.createElement("div");
-  bar.className = "message-actions";
-
-  const copyBtn = document.createElement("button");
-  copyBtn.type = "button";
-  copyBtn.className = "msg-action-btn";
-  copyBtn.setAttribute("aria-label", "Copy message");
-  copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
-  copyBtn.addEventListener("click", async () => {
-    await navigator.clipboard?.writeText(text).catch(() => {});
-    copyBtn.textContent = "Copied!";
-    setTimeout(() => {
-      copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
-    }, 2000);
-  });
-
-  bar.appendChild(copyBtn);
-  return bar;
-}
-
-/**
- * Streams text into an AI message bubble with smooth character-by-character rendering.
- * Uses requestAnimationFrame batching for flicker-free performance.
- */
 async function streamMessage(element, text) {
   if (!element) return;
-
   element.innerHTML = "";
-  element.classList.add("nova-formatted", "streaming");
-
-  // Render in chunks using RAF for smooth, non-blocking streaming
-  const totalChars = text.length;
-  const baseDelay = totalChars > 500 ? 4 : totalChars > 200 ? 7 : 10;
-  const chunkSize = totalChars > 800 ? 6 : totalChars > 300 ? 4 : 2;
-
-  let index = 0;
-  let buffer = "";
-
-  const tick = () =>
-    new Promise((resolve) => {
-      requestAnimationFrame(() => {
-        if (index < totalChars) {
-          buffer += text.slice(index, index + chunkSize);
-          index += chunkSize;
-          // Render incrementally — parse markdown on buffered content
-          element.innerHTML = parseMarkdown(buffer);
-          element.parentElement?.scrollIntoView?.({ block: "end", behavior: "smooth" });
-          if (element.parentElement?.parentElement) {
-            element.parentElement.parentElement.scrollTop =
-              element.parentElement.parentElement.scrollHeight;
-          }
-        }
-        resolve();
-      });
-    });
-
-  while (index < totalChars) {
-    await tick();
-    await wait(baseDelay);
+  
+  let currentText = "";
+  const chunkSize = text.length > 500 ? 10 : (text.length > 200 ? 5 : 2);
+  
+  for (let index = 0; index < text.length; index += chunkSize) {
+    currentText += text.slice(index, index + chunkSize);
+    element.innerHTML = parseMarkdown(currentText);
+    element.parentElement.scrollTop = element.parentElement.scrollHeight;
+    await wait(10);
   }
-
-  // Final clean render to ensure markdown is complete and correct
+  
   element.innerHTML = parseMarkdown(text);
-  element.classList.remove("streaming");
-
-  // Attach action bar after streaming finishes
-  const wrapper = element.closest(".message-wrapper");
-  if (wrapper && !wrapper.querySelector(".message-actions")) {
-    wrapper.appendChild(buildMessageActions(text));
-  }
+  element.parentElement.scrollTop = element.parentElement.scrollHeight;
 }
-
-// ─── Conversation Management ──────────────────────────────────────────────────
 
 function saveChatMessage(type, text) {
   const conversation = getActiveConversation() || createConversation("New chat");
@@ -624,7 +414,7 @@ function startNewChat() {
 }
 
 function getActiveConversation() {
-  return state.conversations.find((c) => c.id === state.activeConversationId);
+  return state.conversations.find((conversation) => conversation.id === state.activeConversationId);
 }
 
 function createConversation(title) {
@@ -636,7 +426,7 @@ function createConversation(title) {
     messages: [
       {
         type: "ai",
-        text: "Hello! I'm NOVA. What would you like to create, plan, or explore today?",
+        text: "New chat started. Tell me what you want to create, plan, or improve next.",
         createdAt: Date.now()
       }
     ]
@@ -655,13 +445,8 @@ function renderActiveConversation() {
   const conversation = getActiveConversation();
   if (!conversation) return;
 
-  conversation.messages
-    .slice(-14)
-    .forEach((msg) => addMessage(chatMessages, msg.type, msg.text));
-
-  conversation.messages
-    .slice(-2)
-    .forEach((msg) => addMessage(overviewMessages, msg.type, msg.text));
+  conversation.messages.slice(-14).forEach((message) => addMessage(chatMessages, message.type, message.text));
+  conversation.messages.slice(-2).forEach((message) => addMessage(overviewMessages, message.type, message.text));
 }
 
 function renderConversationList() {
@@ -669,24 +454,19 @@ function renderConversationList() {
   conversationList.innerHTML = "";
 
   if (!state.conversations.length) {
-    conversationList.innerHTML =
-      '<div class="conversation-empty">No saved chats yet.</div>';
+    conversationList.innerHTML = '<div class="conversation-empty">No saved chats yet.</div>';
     return;
   }
 
   state.conversations.forEach((conversation) => {
     const item = document.createElement("article");
-    item.className = `conversation-item ${
-      conversation.id === state.activeConversationId ? "active" : ""
-    }`;
+    item.className = `conversation-item ${conversation.id === state.activeConversationId ? "active" : ""}`;
     item.innerHTML = `
       <button class="conversation-open" type="button">
         <strong>${escapeHtml(conversation.title)}</strong>
         <span>${formatConversationTime(conversation.updatedAt)}</span>
       </button>
-      <button class="conversation-delete" type="button" aria-label="Delete ${escapeHtml(
-        conversation.title
-      )}">Delete</button>
+      <button class="conversation-delete" type="button" aria-label="Delete ${escapeHtml(conversation.title)}">Delete</button>
     `;
 
     item.querySelector(".conversation-open").addEventListener("click", () => {
@@ -705,7 +485,7 @@ function renderConversationList() {
 }
 
 function deleteConversation(id) {
-  state.conversations = state.conversations.filter((c) => c.id !== id);
+  state.conversations = state.conversations.filter((conversation) => conversation.id !== id);
   if (state.activeConversationId === id) {
     state.activeConversationId = state.conversations[0]?.id || "";
   }
@@ -735,96 +515,50 @@ function migrateSingleChatHistory() {
   const oldHistory = store.get("novaChatHistory", []);
   if (!oldHistory.length || state.conversations.length) return;
 
-  state.conversations = [
-    {
-      id: crypto.randomUUID(),
-      title: "Previous NOVA chat",
-      createdAt: oldHistory[0]?.createdAt || Date.now(),
-      updatedAt: oldHistory.at(-1)?.createdAt || Date.now(),
-      messages: oldHistory
-    }
-  ];
+  state.conversations = [{
+    id: crypto.randomUUID(),
+    title: "Previous NOVA chat",
+    createdAt: oldHistory[0]?.createdAt || Date.now(),
+    updatedAt: oldHistory.at(-1)?.createdAt || Date.now(),
+    messages: oldHistory
+  }];
   state.activeConversationId = state.conversations[0].id;
   persistConversations();
   localStorage.removeItem("novaChatHistory");
 }
 
 function buildConversationTitle(text) {
-  return text.length > 42 ? `${text.slice(0, 42)}…` : text;
+  return text.length > 42 ? `${text.slice(0, 42)}...` : text;
 }
 
 function formatConversationTime(timestamp) {
-  const minutes = Math.max(1, Math.round((Date.now() - timestamp) / 60_000));
+  const minutes = Math.max(1, Math.round((Date.now() - timestamp) / 60000));
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.round(minutes / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.round(hours / 24)}d`;
 }
 
-// ─── Typing Indicator ─────────────────────────────────────────────────────────
-
-function addTypingMessage(container) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "message-wrapper ai";
-
-  const bubble = document.createElement("div");
-  bubble.className = "message ai typing-bubble";
-  bubble.innerHTML = `
-    <span class="typing">
-      <span></span>
-      <span></span>
-      <span></span>
-    </span>`;
-
-  wrapper.appendChild(bubble);
-  container.appendChild(wrapper);
-  container.scrollTop = container.scrollHeight;
-  return wrapper;
-}
-
-function trimMessages(container) {
-  // Keep last 40 wrappers to prevent DOM bloat while preserving context
-  while (container.children.length > 40) {
-    container.removeChild(container.firstElementChild);
-  }
-}
-
-// ─── Voice Mode ───────────────────────────────────────────────────────────────
-
 function toggleVoiceMode() {
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    if (voiceStatus) {
-      voiceStatus.textContent =
-        "Voice recognition isn't supported in this browser. Try Chrome on desktop or Android.";
-    }
+    voiceStatus.textContent = "Voice recognition is not supported in this browser. Try Chrome on desktop or Android.";
     return;
   }
 
   if (!recognition) {
     recognition = new SpeechRecognition();
-    recognition.lang =
-      state.settings.language === "hi"
-        ? "hi-IN"
-        : state.settings.language === "bn"
-        ? "bn-IN"
-        : "en-US";
+    recognition.lang = state.settings.language === "hi" ? "hi-IN" : state.settings.language === "bn" ? "bn-IN" : "en-US";
     recognition.interimResults = false;
-
     recognition.onresult = async (event) => {
       const transcript = event.results[0][0].transcript;
-      if (voiceStatus) voiceStatus.textContent = `You said: ${transcript}`;
-      const response = await askFreeAI(transcript).catch(() =>
-        buildFallbackResponse(transcript)
-      );
-      if (voiceStatus) voiceStatus.textContent = response;
-      speakResponse(response);
+      voiceStatus.textContent = `You said: ${transcript}`;
+      const response = await askFreeAI(transcript).catch(() => buildFallbackResponse());
+      voiceStatus.innerHTML = parseMarkdown(response);
+      speakResponse(response.replace(/[*_`#]/g, ''));
       saveChatMessage("user", transcript);
       saveChatMessage("ai", response);
     };
-
     recognition.onend = () => setVoiceState(false);
   }
 
@@ -841,7 +575,7 @@ function setVoiceState(active) {
   isListening = active;
   voiceOrb?.classList.toggle("listening", active);
   if (voiceToggle) voiceToggle.textContent = active ? "Stop Listening" : "Start Listening";
-  if (active && voiceStatus) voiceStatus.textContent = "Listening…";
+  if (active && voiceStatus) voiceStatus.textContent = "Listening...";
 }
 
 function speakResponse(text) {
@@ -852,8 +586,6 @@ function speakResponse(text) {
   utterance.pitch = 1.05;
   window.speechSynthesis.speak(utterance);
 }
-
-// ─── Command Palette ─────────────────────────────────────────────────────────
 
 const commands = [
   { label: "Open AI Chat", panel: "ai-chat" },
@@ -869,7 +601,7 @@ const commands = [
 function openCommandPalette() {
   commandPalette?.classList.add("open");
   commandPalette?.setAttribute("aria-hidden", "false");
-  if (commandInput) commandInput.value = "";
+  commandInput.value = "";
   renderCommands();
   commandInput?.focus();
 }
@@ -883,32 +615,43 @@ function renderCommands() {
   if (!commandResults) return;
   const query = commandInput?.value.toLowerCase() || "";
   commandResults.innerHTML = "";
-
   commands
-    .filter((cmd) => cmd.label.toLowerCase().includes(query))
-    .forEach((cmd) => {
+    .filter((command) => command.label.toLowerCase().includes(query))
+    .forEach((command) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.textContent = cmd.label;
+      button.textContent = command.label;
       button.addEventListener("click", () => {
-        if (cmd.panel) {
-          window.location.hash = cmd.panel;
-          activatePanel(cmd.panel);
+        if (command.panel) {
+          window.location.hash = command.panel;
+          activatePanel(command.panel);
         }
-        if (cmd.action) cmd.action();
+        if (command.action) command.action();
         closeCommandPalette();
       });
       commandResults.appendChild(button);
     });
 }
 
-// ─── Tasks ────────────────────────────────────────────────────────────────────
+function addTypingMessage(container) {
+  const message = document.createElement("div");
+  message.className = "message ai";
+  message.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+  container.appendChild(message);
+  container.scrollTop = container.scrollHeight;
+  return message;
+}
+
+function trimMessages(container) {
+  while (container.children.length > 8) {
+    container.removeChild(container.firstElementChild);
+  }
+}
 
 function renderTasks() {
   taskList.innerHTML = "";
   if (!state.tasks.length) {
-    taskList.innerHTML =
-      '<li class="task-item"><span>No tasks yet. Add your next focused move.</span></li>';
+    taskList.innerHTML = '<li class="task-item"><span>No tasks yet. Add your next focused move.</span></li>';
     return;
   }
 
@@ -925,14 +668,12 @@ function renderTasks() {
       persistTasks();
     });
     item.querySelector("button").addEventListener("click", () => {
-      state.tasks = state.tasks.filter((t) => t.id !== task.id);
+      state.tasks = state.tasks.filter((savedTask) => savedTask.id !== task.id);
       persistTasks();
     });
     taskList.appendChild(item);
   });
 }
-
-// ─── Saved Prompts ────────────────────────────────────────────────────────────
 
 function renderPrompts() {
   promptList.innerHTML = "";
@@ -949,7 +690,7 @@ function renderPrompts() {
       <button type="button">Delete</button>
     `;
     item.querySelector("button").addEventListener("click", () => {
-      state.prompts = state.prompts.filter((p) => p.id !== prompt.id);
+      state.prompts = state.prompts.filter((savedPrompt) => savedPrompt.id !== prompt.id);
       persistPrompts();
     });
     promptList.appendChild(item);
@@ -962,8 +703,6 @@ function savePrompt(text) {
   activatePanel("saved-prompts");
   window.location.hash = "saved-prompts";
 }
-
-// ─── Persist Helpers ──────────────────────────────────────────────────────────
 
 function persistTasks() {
   store.set("novaTasks", state.tasks);
@@ -982,8 +721,6 @@ function persistSettings() {
   applySettings();
 }
 
-// ─── Settings & Theming ───────────────────────────────────────────────────────
-
 function applySettings() {
   document.body.classList.toggle("light-mode", state.settings.light);
   document.body.classList.toggle("compact-ui", state.settings.compact);
@@ -991,21 +728,50 @@ function applySettings() {
   document.body.dataset.wallpaper = state.settings.wallpaper;
   document.body.dataset.mode = state.settings.mode;
 
-  const fields = {
-    themeToggle: (el) => (el.checked = state.settings.light),
-    compactToggle: (el) => (el.checked = state.settings.compact),
-    accentSelect: (el) => (el.value = state.settings.accent),
-    wallpaperSelect: (el) => (el.value = state.settings.wallpaper),
-    languageSelect: (el) => (el.value = state.settings.language),
-    modeSelect: (el) => (el.value = state.settings.mode)
-  };
-
-  Object.entries(fields).forEach(([id, apply]) => {
-    const el = document.getElementById(id);
-    if (el) apply(el);
-  });
-
+  const themeToggle = document.getElementById("themeToggle");
+  const compactToggle = document.getElementById("compactToggle");
+  const accentSelect = document.getElementById("accentSelect");
+  const wallpaperSelect = document.getElementById("wallpaperSelect");
+  const languageSelect = document.getElementById("languageSelect");
+  const modeSelect = document.getElementById("modeSelect");
+  if (themeToggle) themeToggle.checked = state.settings.light;
+  if (compactToggle) compactToggle.checked = state.settings.compact;
+  if (accentSelect) accentSelect.value = state.settings.accent;
+  if (wallpaperSelect) wallpaperSelect.value = state.settings.wallpaper;
+  if (languageSelect) languageSelect.value = state.settings.language;
+  if (modeSelect) modeSelect.value = state.settings.mode;
   updateModeSuggestion();
+}
+
+function renderAll() {
+  renderTasks();
+  renderPrompts();
+  updateCounters();
+}
+
+function setGreeting() {
+  const hour = new Date().getHours();
+  let greeting = "Good Evening";
+  if (hour < 12) greeting = "Good Morning";
+  if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
+
+  if (greetingTitle) greetingTitle.textContent = `${greeting}, Rohan`;
+  if (greetingSubtitle) {
+    greetingSubtitle.textContent = "Build, plan, and automate your next focused move with NOVA.";
+  }
+}
+
+function dismissLoader() {
+  if (!startupLoader) return;
+  window.setTimeout(() => {
+    startupLoader.classList.add("hidden");
+  }, 850);
+}
+
+function updateCounters() {
+  document.getElementById("requestCount").textContent = state.requestCount;
+  document.getElementById("taskCount").textContent = state.tasks.filter((task) => !task.completed).length;
+  document.getElementById("promptCount").textContent = state.prompts.length;
 }
 
 function updateModeSuggestion() {
@@ -1017,85 +783,35 @@ function updateModeSuggestion() {
     creator: "Content ideas, thumbnails, captions, and posting schedules.",
     student: "Study plans, notes, assignments, and focus sessions."
   };
-  themePreview.querySelector("small").textContent =
-    modeText[state.settings.mode] || modeText.freelancer;
+  themePreview.querySelector("small").textContent = modeText[state.settings.mode] || modeText.freelancer;
 }
-
-// ─── Render All ───────────────────────────────────────────────────────────────
-
-function renderAll() {
-  renderTasks();
-  renderPrompts();
-  updateCounters();
-}
-
-// ─── Greeting ─────────────────────────────────────────────────────────────────
-
-function setGreeting() {
-  const hour = new Date().getHours();
-  let greeting = "Good Evening";
-  if (hour < 12) greeting = "Good Morning";
-  else if (hour < 17) greeting = "Good Afternoon";
-
-  if (greetingTitle) greetingTitle.textContent = `${greeting}, Rohan`;
-  if (greetingSubtitle) {
-    greetingSubtitle.textContent =
-      "Build, plan, and automate your next focused move with NOVA.";
-  }
-}
-
-// ─── Counters ─────────────────────────────────────────────────────────────────
-
-function updateCounters() {
-  const rc = document.getElementById("requestCount");
-  const tc = document.getElementById("taskCount");
-  const pc = document.getElementById("promptCount");
-  if (rc) rc.textContent = state.requestCount;
-  if (tc) tc.textContent = state.tasks.filter((t) => !t.completed).length;
-  if (pc) pc.textContent = state.prompts.length;
-}
-
-// ─── Loader ───────────────────────────────────────────────────────────────────
-
-function dismissLoader() {
-  if (!startupLoader) return;
-  window.setTimeout(() => startupLoader.classList.add("hidden"), 850);
-}
-
-// ─── Document Generation ──────────────────────────────────────────────────────
 
 async function generateDocument() {
   const type = document.getElementById("docType").value;
-  const input =
-    document.getElementById("docInput").value.trim() ||
-    "a premium AI productivity project";
+  const input = document.getElementById("docInput").value.trim() || "a premium AI productivity project";
   let output;
   try {
     const response = await callNovaBackend(NOVA_API_ROUTES.document, { type, input });
     output = response.text;
-  } catch {
+  } catch (error) {
     output = createLocalDocument(type, input);
   }
-  document.getElementById("docOutput").textContent = output;
-  state.prompts.unshift({
-    id: crypto.randomUUID(),
-    text: `Generated ${type}: ${input}`,
-    createdAt: Date.now()
-  });
+  document.getElementById("docOutput").innerHTML = parseMarkdown(output);
+  state.prompts.unshift({ id: crypto.randomUUID(), text: `Generated ${type}: ${input}`, createdAt: Date.now() });
   persistPrompts();
 }
 
 function createLocalDocument(type, input) {
-  return `NOVA ${type.toUpperCase()}\n\nObjective:\n${input}\n\nSuggested Structure:\n1. Start with a clear hook and context.\n2. Present the most important achievement or value proposition.\n3. Add specific proof, metrics, or examples.\n4. Close with a confident next step.\n\nPolished Draft:\nDear reader,\n\nI am sharing this ${type} to communicate a focused, high-quality outcome around ${input}. The goal is to make the message concise, useful, and professional while keeping a premium tone.\n\nKey points:\n- Clear purpose and audience fit\n- Strong opening statement\n- Practical evidence and outcomes\n- Confident call to action\n\nBest,\nNOVA AI`;
+  return `NOVA ${type.toUpperCase()}\n\n**Objective:**\n${input}\n\n**Suggested Structure:**\n1. Start with a clear hook and context.\n2. Present the most important achievement or value proposition.\n3. Add specific proof, metrics, or examples.\n4. Close with a confident next step.\n\n**Polished Draft:**\nDear reader,\n\nI am sharing this ${type} to communicate a focused, high-quality outcome around ${input}. The goal is to make the message concise, useful, and professional while keeping a premium tone.\n\n**Key points:**\n- Clear purpose and audience fit\n- Strong opening statement\n- Practical evidence and outcomes\n- Confident call to action\n\nBest,\nNOVA AI`;
 }
 
 async function copyDocument() {
-  const text = document.getElementById("docOutput").textContent;
+  const text = document.getElementById("docOutput").innerText;
   await navigator.clipboard?.writeText(text);
 }
 
 function downloadDocument() {
-  const text = document.getElementById("docOutput").textContent;
+  const text = document.getElementById("docOutput").innerText;
   const blob = new Blob([text], { type: "text/plain" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -1104,30 +820,18 @@ function downloadDocument() {
   URL.revokeObjectURL(link.href);
 }
 
-// ─── Image Generation ─────────────────────────────────────────────────────────
-
 async function generateImage() {
   const type = document.getElementById("imageType").value;
-  const prompt =
-    document.getElementById("imagePrompt").value.trim() ||
-    "NOVA AI futuristic SaaS platform neon blue purple";
+  const prompt = document.getElementById("imagePrompt").value.trim() || "NOVA AI futuristic SaaS platform neon blue purple";
   const fullPrompt = `${type}, ${prompt}, futuristic premium AI startup design, neon blue purple, cinematic, high detail`;
   let url;
   try {
-    const response = await callNovaBackend(NOVA_API_ROUTES.image, {
-      prompt: fullPrompt,
-      type
-    });
+    const response = await callNovaBackend(NOVA_API_ROUTES.image, { prompt: fullPrompt, type });
     url = response.url;
-  } catch {
+  } catch (error) {
     url = createPlaceholderImage(fullPrompt);
   }
-  state.images.unshift({
-    id: crypto.randomUUID(),
-    prompt: fullPrompt,
-    url,
-    createdAt: Date.now()
-  });
+  state.images.unshift({ id: crypto.randomUUID(), prompt: fullPrompt, url, createdAt: Date.now() });
   state.images = state.images.slice(0, 8);
   store.set("novaImages", state.images);
   renderImages();
@@ -1155,9 +859,7 @@ function createPlaceholderImage(prompt) {
 function renderImages() {
   const gallery = document.getElementById("imageGallery");
   if (!gallery) return;
-  gallery.innerHTML = state.images.length
-    ? ""
-    : '<p class="conversation-empty">Generated images will appear here.</p>';
+  gallery.innerHTML = state.images.length ? "" : '<p class="conversation-empty">Generated images will appear here.</p>';
   state.images.forEach((image) => {
     const card = document.createElement("article");
     card.innerHTML = `<img src="${image.url}" alt="${escapeHtml(image.prompt)}"><p>${escapeHtml(image.prompt)}</p>`;
@@ -1165,17 +867,13 @@ function renderImages() {
   });
 }
 
-// ─── Planner ──────────────────────────────────────────────────────────────────
-
 async function generatePlan() {
-  const input =
-    document.getElementById("plannerInput").value.trim() ||
-    "finish priority tasks, study, and ship one project improvement";
+  const input = document.getElementById("plannerInput").value.trim() || "finish priority tasks, study, and ship one project improvement";
   let blocks;
   try {
     const response = await callNovaBackend(NOVA_API_ROUTES.planner, { input });
     blocks = response.blocks;
-  } catch {
+  } catch (error) {
     blocks = [
       ["09:00", "Deep work", `Start with the hardest part of: ${input}`],
       ["11:00", "AI assist", "Use NOVA to summarize, draft, or generate missing assets."],
@@ -1196,20 +894,14 @@ async function generatePlan() {
 function renderPlanner() {
   const timeline = document.getElementById("plannerTimeline");
   if (!timeline) return;
-  timeline.innerHTML = state.planner.length
-    ? ""
-    : '<p class="conversation-empty">Generate a plan to build your day.</p>';
+  timeline.innerHTML = state.planner.length ? "" : '<p class="conversation-empty">Generate a plan to build your day.</p>';
   state.planner.forEach((block) => {
     const item = document.createElement("article");
     item.className = "planner-block";
-    item.innerHTML = `<span>${block.time}</span><strong>${escapeHtml(
-      block.title
-    )}</strong><p>${escapeHtml(block.text)}</p>`;
+    item.innerHTML = `<span>${block.time}</span><strong>${escapeHtml(block.title)}</strong><p>${escapeHtml(block.text)}</p>`;
     timeline.appendChild(item);
   });
 }
-
-// ─── Memory Export ────────────────────────────────────────────────────────────
 
 function exportMemory() {
   const data = {
@@ -1221,17 +913,13 @@ function exportMemory() {
     images: state.images,
     profile: state.profile
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
-    type: "application/json"
-  });
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = "nova-ai-memory.json";
   link.click();
   URL.revokeObjectURL(link.href);
 }
-
-// ─── Quote ────────────────────────────────────────────────────────────────────
 
 async function loadQuote() {
   const quoteText = document.getElementById("quoteText");
@@ -1241,28 +929,27 @@ async function loadQuote() {
     const response = await fetch("https://api.quotable.io/random");
     if (!response.ok) throw new Error("Quote request failed");
     const data = await response.json();
-    if (quoteText) quoteText.textContent = `"${data.content}"`;
-    if (quoteAuthor) quoteAuthor.textContent = data.author ? `— ${data.author}` : "";
-  } catch {
-    if (quoteText) quoteText.textContent = "Small focused actions compound into serious momentum.";
-    if (quoteAuthor) quoteAuthor.textContent = "— NOVA AI";
+    quoteText.textContent = `"${data.content}"`;
+    quoteAuthor.textContent = data.author ? `- ${data.author}` : "";
+  } catch (error) {
+    quoteText.textContent = "Small focused actions compound into serious momentum.";
+    quoteAuthor.textContent = "- NOVA AI";
   }
 }
-
-// ─── Utilities ────────────────────────────────────────────────────────────────
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function escapeHtml(value) {
-  if (!value) return "";
-  return String(value).replace(/[&<>"']/g, (char) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])
-  );
+  return value.replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[char]));
 }
-
-// ─── Ambient Effects ──────────────────────────────────────────────────────────
 
 function addCursorGlow() {
   if (window.matchMedia("(pointer: coarse)").matches) return;
@@ -1272,9 +959,7 @@ function addCursorGlow() {
 
   window.addEventListener("pointermove", (event) => {
     glow.style.opacity = "1";
-    glow.style.transform = `translate3d(${event.clientX - 110}px, ${
-      event.clientY - 110
-    }px, 0)`;
+    glow.style.transform = `translate3d(${event.clientX - 110}px, ${event.clientY - 110}px, 0)`;
   });
 
   window.addEventListener("pointerleave", () => {
@@ -1286,7 +971,7 @@ function createParticles() {
   const scene = document.querySelector(".ambient-scene");
   if (!scene) return;
 
-  for (let i = 0; i < 28; i++) {
+  for (let index = 0; index < 28; index += 1) {
     const particle = document.createElement("span");
     particle.className = "particle";
     particle.style.setProperty("--x", `${Math.random() * 100}%`);
@@ -1298,12 +983,9 @@ function createParticles() {
   }
 }
 
-// ─── Service Worker ───────────────────────────────────────────────────────────
-
 function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register("sw.js")
+    navigator.serviceWorker.register("sw.js")
       .then((registration) => registration.update())
       .catch(() => {});
   }
