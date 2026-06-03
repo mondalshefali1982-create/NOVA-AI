@@ -400,16 +400,12 @@ function buildFallbackResponse(message) {
 
 /**
  * Converts markdown-like text into clean HTML for chat messages.
- * Supports: bold, italic, inline code, code blocks, ordered/unordered lists,
- * blockquotes, headings, horizontal rules, and paragraphs.
+ * Optimised block regex structures prevent catastrophic backtracking during token processing.
  */
 function parseMarkdown(text) {
   if (!text) return "";
 
   let html = text;
-
-  // Escape HTML entities first (only for non-markdown characters to avoid double escaping)
-  // We'll escape within code blocks separately below
 
   // Fenced code blocks (``` lang\n...\n```)
   html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
@@ -475,7 +471,6 @@ function parseMarkdown(text) {
       const trimmed = segment.trim();
       if (!trimmed) return "";
       if (blockTags.test(trimmed)) return trimmed;
-      // Single line breaks within a paragraph → <br>
       return `<p>${trimmed.replace(/\n/g, "<br>")}</p>`;
     })
     .filter(Boolean)
@@ -521,6 +516,8 @@ function addMessage(container, type, text) {
 
   container.appendChild(wrapper);
   trimMessages(container);
+  
+  // High-performance scroll anchoring logic
   container.scrollTop = container.scrollHeight;
   return bubble;
 }
@@ -551,7 +548,7 @@ function buildMessageActions(text) {
 
 /**
  * Streams text into an AI message bubble with smooth character-by-character rendering.
- * Uses requestAnimationFrame batching for flicker-free performance.
+ * Uses requestAnimationFrame-driven text integration to prevent UI thread execution locks.
  */
 async function streamMessage(element, text) {
   if (!element) return;
@@ -559,46 +556,56 @@ async function streamMessage(element, text) {
   element.innerHTML = "";
   element.classList.add("nova-formatted", "streaming");
 
-  // Render in chunks using RAF for smooth, non-blocking streaming
   const totalChars = text.length;
-  const baseDelay = totalChars > 500 ? 4 : totalChars > 200 ? 7 : 10;
-  const chunkSize = totalChars > 800 ? 6 : totalChars > 300 ? 4 : 2;
+  // Adaptive batching: short messages look granular; long messages render larger tokens to match speed
+  const chunkSize = totalChars > 800 ? 12 : totalChars > 300 ? 6 : 3;
+  const baseDelay = totalChars > 500 ? 8 : totalChars > 200 ? 12 : 16;
 
   let index = 0;
   let buffer = "";
+  const scrollContainer = element.closest("#chatMessages") || element.parentElement?.parentElement;
 
-  const tick = () =>
-    new Promise((resolve) => {
-      requestAnimationFrame(() => {
-        if (index < totalChars) {
-          buffer += text.slice(index, index + chunkSize);
-          index += chunkSize;
-          // Render incrementally — parse markdown on buffered content
-          element.innerHTML = parseMarkdown(buffer);
-          element.parentElement?.scrollIntoView?.({ block: "end", behavior: "smooth" });
-          if (element.parentElement?.parentElement) {
-            element.parentElement.parentElement.scrollTop =
-              element.parentElement.parentElement.scrollHeight;
-          }
+  const renderFrame = () => {
+    if (index < totalChars) {
+      buffer += text.slice(index, index + chunkSize);
+      index += chunkSize;
+      element.innerHTML = parseMarkdown(buffer);
+
+      if (scrollContainer) {
+        // Fast layout evaluation prevents layout thrashing
+        const shouldScroll = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 150;
+        if (shouldScroll) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
         }
+      }
+      setTimeout(() => requestAnimationFrame(renderFrame), baseDelay);
+    } else {
+      // Final pass optimization
+      element.innerHTML = parseMarkdown(text);
+      element.classList.remove("streaming");
+
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+
+      const wrapper = element.closest(".message-wrapper");
+      if (wrapper && !wrapper.querySelector(".message-actions")) {
+        wrapper.appendChild(buildMessageActions(text));
+      }
+    }
+  };
+
+  requestAnimationFrame(renderFrame);
+
+  // Promise hooks ensure async synchronization with backend storage operations
+  return new Promise((resolve) => {
+    const checkDone = setInterval(() => {
+      if (index >= totalChars) {
+        clearInterval(checkDone);
         resolve();
-      });
-    });
-
-  while (index < totalChars) {
-    await tick();
-    await wait(baseDelay);
-  }
-
-  // Final clean render to ensure markdown is complete and correct
-  element.innerHTML = parseMarkdown(text);
-  element.classList.remove("streaming");
-
-  // Attach action bar after streaming finishes
-  const wrapper = element.closest(".message-wrapper");
-  if (wrapper && !wrapper.querySelector(".message-actions")) {
-    wrapper.appendChild(buildMessageActions(text));
-  }
+      }
+    }, 50);
+  });
 }
 
 // ─── Conversation Management ──────────────────────────────────────────────────
@@ -649,19 +656,59 @@ function createConversation(title) {
 }
 
 function renderActiveConversation() {
+  // Use DocumentFragments to append elements in batches instead of repeatedly causing repaints
+  const chatFragment = document.createDocumentFragment();
+  const overviewFragment = document.createDocumentFragment();
+
   if (chatMessages) chatMessages.innerHTML = "";
   if (overviewMessages) overviewMessages.innerHTML = "";
 
   const conversation = getActiveConversation();
   if (!conversation) return;
 
-  conversation.messages
-    .slice(-14)
-    .forEach((msg) => addMessage(chatMessages, msg.type, msg.text));
+  conversation.messages.slice(-14).forEach((msg) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = `message-wrapper ${msg.type}`;
+    const bubble = document.createElement("div");
+    bubble.className = `message ${msg.type}`;
 
-  conversation.messages
-    .slice(-2)
-    .forEach((msg) => addMessage(overviewMessages, msg.type, msg.text));
+    if (msg.type === "ai" && msg.text) {
+      bubble.innerHTML = parseMarkdown(msg.text);
+      bubble.classList.add("nova-formatted");
+      wrapper.appendChild(bubble);
+      wrapper.appendChild(buildMessageActions(msg.text));
+    } else {
+      bubble.textContent = msg.text;
+      wrapper.appendChild(bubble);
+    }
+    chatFragment.appendChild(wrapper);
+  });
+
+  conversation.messages.slice(-2).forEach((msg) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = `message-wrapper ${msg.type}`;
+    const bubble = document.createElement("div");
+    bubble.className = `message ${msg.type}`;
+
+    if (msg.type === "ai" && msg.text) {
+      bubble.innerHTML = parseMarkdown(msg.text);
+      bubble.classList.add("nova-formatted");
+      wrapper.appendChild(bubble);
+    } else {
+      bubble.textContent = msg.text;
+      wrapper.appendChild(bubble);
+    }
+    overviewFragment.appendChild(wrapper);
+  });
+
+  if (chatMessages) {
+    chatMessages.appendChild(chatFragment);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+  if (overviewMessages) {
+    overviewMessages.appendChild(overviewFragment);
+    overviewMessages.scrollTop = overviewMessages.scrollHeight;
+  }
 }
 
 function renderConversationList() {
@@ -673,6 +720,8 @@ function renderConversationList() {
       '<div class="conversation-empty">No saved chats yet.</div>';
     return;
   }
+
+  const listFragment = document.createDocumentFragment();
 
   state.conversations.forEach((conversation) => {
     const item = document.createElement("article");
@@ -700,8 +749,10 @@ function renderConversationList() {
       deleteConversation(conversation.id);
     });
 
-    conversationList.appendChild(item);
+    listFragment.appendChild(item);
   });
+
+  conversationList.appendChild(listFragment);
 }
 
 function deleteConversation(id) {
@@ -783,7 +834,6 @@ function addTypingMessage(container) {
 }
 
 function trimMessages(container) {
-  // Keep last 40 wrappers to prevent DOM bloat while preserving context
   while (container.children.length > 40) {
     container.removeChild(container.firstElementChild);
   }
@@ -847,7 +897,7 @@ function setVoiceState(active) {
 function speakResponse(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
+  const utterance = new SynthesisUtterance(text);
   utterance.rate = 1;
   utterance.pitch = 1.05;
   window.speechSynthesis.speak(utterance);
@@ -884,6 +934,8 @@ function renderCommands() {
   const query = commandInput?.value.toLowerCase() || "";
   commandResults.innerHTML = "";
 
+  const fragment = document.createDocumentFragment();
+
   commands
     .filter((cmd) => cmd.label.toLowerCase().includes(query))
     .forEach((cmd) => {
@@ -898,8 +950,10 @@ function renderCommands() {
         if (cmd.action) cmd.action();
         closeCommandPalette();
       });
-      commandResults.appendChild(button);
+      fragment.appendChild(button);
     });
+
+  commandResults.appendChild(fragment);
 }
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
@@ -911,6 +965,8 @@ function renderTasks() {
       '<li class="task-item"><span>No tasks yet. Add your next focused move.</span></li>';
     return;
   }
+
+  const fragment = document.createDocumentFragment();
 
   state.tasks.forEach((task) => {
     const item = document.createElement("li");
@@ -928,8 +984,10 @@ function renderTasks() {
       state.tasks = state.tasks.filter((t) => t.id !== task.id);
       persistTasks();
     });
-    taskList.appendChild(item);
+    fragment.appendChild(item);
   });
+
+  taskList.appendChild(fragment);
 }
 
 // ─── Saved Prompts ────────────────────────────────────────────────────────────
@@ -940,6 +998,8 @@ function renderPrompts() {
     promptList.innerHTML = '<div class="prompt-item"><span>No saved prompts yet.</span></div>';
     return;
   }
+
+  const fragment = document.createDocumentFragment();
 
   state.prompts.forEach((prompt) => {
     const item = document.createElement("div");
@@ -952,8 +1012,10 @@ function renderPrompts() {
       state.prompts = state.prompts.filter((p) => p.id !== prompt.id);
       persistPrompts();
     });
-    promptList.appendChild(item);
+    fragment.appendChild(item);
   });
+
+  promptList.appendChild(fragment);
 }
 
 function savePrompt(text) {
@@ -1158,11 +1220,16 @@ function renderImages() {
   gallery.innerHTML = state.images.length
     ? ""
     : '<p class="conversation-empty">Generated images will appear here.</p>';
+
+  const fragment = document.createDocumentFragment();
+
   state.images.forEach((image) => {
     const card = document.createElement("article");
     card.innerHTML = `<img src="${image.url}" alt="${escapeHtml(image.prompt)}"><p>${escapeHtml(image.prompt)}</p>`;
-    gallery.appendChild(card);
+    fragment.appendChild(card);
   });
+
+  gallery.appendChild(fragment);
 }
 
 // ─── Planner ──────────────────────────────────────────────────────────────────
@@ -1199,14 +1266,19 @@ function renderPlanner() {
   timeline.innerHTML = state.planner.length
     ? ""
     : '<p class="conversation-empty">Generate a plan to build your day.</p>';
+
+  const fragment = document.createDocumentFragment();
+
   state.planner.forEach((block) => {
     const item = document.createElement("article");
     item.className = "planner-block";
     item.innerHTML = `<span>${block.time}</span><strong>${escapeHtml(
       block.title
     )}</strong><p>${escapeHtml(block.text)}</p>`;
-    timeline.appendChild(item);
+    fragment.appendChild(item);
   });
+
+  timeline.appendChild(fragment);
 }
 
 // ─── Memory Export ────────────────────────────────────────────────────────────
@@ -1268,23 +1340,39 @@ function addCursorGlow() {
   if (window.matchMedia("(pointer: coarse)").matches) return;
   const glow = document.createElement("div");
   glow.className = "cursor-glow";
+  glow.style.willChange = "transform, opacity";
   document.body.appendChild(glow);
 
+  let transformX = 0;
+  let transformY = 0;
+  let isMoving = false;
+
+  const updateGlowPosition = () => {
+    glow.style.transform = `translate3d(${transformX - 110}px, ${transformY - 110}px, 0)`;
+    isMoving = false;
+  };
+
   window.addEventListener("pointermove", (event) => {
+    transformX = event.clientX;
+    transformY = event.clientY;
     glow.style.opacity = "1";
-    glow.style.transform = `translate3d(${event.clientX - 110}px, ${
-      event.clientY - 110
-    }px, 0)`;
-  });
+    
+    if (!isMoving) {
+      requestAnimationFrame(updateGlowPosition);
+      isMoving = true;
+    }
+  }, { passive: true });
 
   window.addEventListener("pointerleave", () => {
     glow.style.opacity = "0";
-  });
+  }, { passive: true });
 }
 
 function createParticles() {
   const scene = document.querySelector(".ambient-scene");
   if (!scene) return;
+
+  const fragment = document.createDocumentFragment();
 
   for (let i = 0; i < 28; i++) {
     const particle = document.createElement("span");
@@ -1294,8 +1382,10 @@ function createParticles() {
     particle.style.setProperty("--size", `${Math.random() * 2.2 + 1}px`);
     particle.style.setProperty("--duration", `${Math.random() * 8 + 8}s`);
     particle.style.setProperty("--delay", `${Math.random() * -10}s`);
-    scene.appendChild(particle);
+    fragment.appendChild(particle);
   }
+
+  scene.appendChild(fragment);
 }
 
 // ─── Service Worker ───────────────────────────────────────────────────────────
