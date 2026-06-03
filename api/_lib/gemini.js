@@ -1,4 +1,5 @@
-const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_ENDPOINT =
+  "https://openrouter.ai/api/v1/chat/completions";
 
 const MODELS = [
   "google/gemma-4-26b-a4b-it:free",
@@ -13,10 +14,12 @@ function setCors(res) {
     "Access-Control-Allow-Origin",
     process.env.ALLOWED_ORIGIN || "*"
   );
+
   res.setHeader(
     "Access-Control-Allow-Methods",
     "POST, OPTIONS"
   );
+
   res.setHeader(
     "Access-Control-Allow-Headers",
     "Content-Type"
@@ -39,6 +42,7 @@ function requirePost(req, res) {
     res.status(405).json({
       error: "Method not allowed. Use POST."
     });
+
     return false;
   }
 
@@ -60,13 +64,85 @@ function getBody(req) {
 }
 
 async function callGemini(prompt, options = {}) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const googleApiKey = process.env.GOOGLE_API_KEY;
+  const openrouterApiKey =
+    process.env.OPENROUTER_API_KEY;
 
-  if (!apiKey) {
+  // =====================================
+  // GOOGLE GEMINI PRIMARY
+  // =====================================
+
+  if (googleApiKey) {
+    try {
+      console.log("Trying Google Gemini...");
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleApiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text:
+                      (options.systemInstruction ||
+                        options.systemInstructions ||
+                        "You are NOVA AI, a helpful AI assistant.") +
+                      "\n\nUser: " +
+                      prompt
+                  }
+                ]
+              }
+            ]
+          })
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        const text =
+          data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (text) {
+          console.log(
+            "Success using Google Gemini"
+          );
+
+          return text.trim();
+        }
+      }
+
+      const errorText =
+        await response.text();
+
+      console.log(
+        "Gemini unavailable:",
+        errorText
+      );
+    } catch (err) {
+      console.error(
+        "Gemini failed:",
+        err.message
+      );
+    }
+  }
+
+  // =====================================
+  // OPENROUTER FALLBACK
+  // =====================================
+
+  if (!openrouterApiKey) {
     const error = new Error(
       "Missing OPENROUTER_API_KEY environment variable."
     );
+
     error.statusCode = 500;
+
     throw error;
   }
 
@@ -81,9 +157,10 @@ async function callGemini(prompt, options = {}) {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${apiKey}`,
+            Authorization: `Bearer ${openrouterApiKey}`,
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://nova-ai-rohann.vercel.app",
+            "HTTP-Referer":
+              "https://nova-ai-rohann.vercel.app",
             "X-Title": "NOVA AI"
           },
           body: JSON.stringify({
@@ -106,7 +183,8 @@ async function callGemini(prompt, options = {}) {
       );
 
       if (!response.ok) {
-        const details = await response.text();
+        const details =
+          await response.text();
 
         if (
           response.status === 429 ||
@@ -117,6 +195,7 @@ async function callGemini(prompt, options = {}) {
           );
 
           lastError = details;
+
           continue;
         }
 
@@ -124,11 +203,14 @@ async function callGemini(prompt, options = {}) {
           `OpenRouter request failed: ${details}`
         );
 
-        error.statusCode = response.status;
+        error.statusCode =
+          response.status;
+
         throw error;
       }
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       console.log(
         `Success using model: ${model}`
@@ -158,7 +240,8 @@ async function callGemini(prompt, options = {}) {
 }
 
 function sendError(res, error) {
-  const status = error.statusCode || 500;
+  const status =
+    error.statusCode || 500;
 
   res.status(status).json({
     error: error.message,
