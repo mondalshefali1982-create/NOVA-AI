@@ -330,7 +330,7 @@ async function callNovaBackend(route, payload) {
 }
 
 function buildFallbackResponse(message) {
-  return `Secure Gemini backend is not configured yet. Local NOVA fallback for "${message}": clarify the goal, break it into 3 focused tasks, choose the fastest first step, and save the best prompt so you can reuse it later.`;
+  return `"The AI provider is temporarily busy. Please try again in a few moments.". Local NOVA fallback for "${message}": clarify the goal, break it into 3 focused tasks, choose the fastest first step, and save the best prompt so you can reuse it later.`;
 }
 
 function addMessage(container, type, text) {
