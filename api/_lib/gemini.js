@@ -52,7 +52,7 @@ async function callGemini(prompt, options = {}) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: "openai/gpt-oss-120b:free",
+      model: "google/gemma-4-31b-it:free",
       messages: [
         {
           role: "system",
