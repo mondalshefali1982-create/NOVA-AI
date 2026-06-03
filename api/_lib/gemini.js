@@ -80,10 +80,10 @@ async function callGemini(prompt, options = {}) {
 
 function sendError(res, error) {
   const status = error.statusCode || 500;
-  res.status(status).json({
-    error: status === 500 ? "NOVA backend error." : error.message,
-    detail: process.env.NODE_ENV === "development" ? error.message : undefined
-  });
+ res.status(status).json({
+  error: error.message,
+  status
+});
 }
 
 function safeJson(text, fallback) {
