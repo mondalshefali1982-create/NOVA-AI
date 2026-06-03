@@ -45,33 +45,78 @@ async function callGemini(prompt, options = {}) {
     throw error;
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: "google/gemma-4-26b-a4b-it:free",
-      messages: [
-        {
-          role: "system",
-          content: options.systemInstruction || "You are NOVA AI."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ]
-    })
-  });
+  const MODELS = [
+    "google/gemma-4-26b-a4b-it:free",
+    "openai/gpt-oss-120b:free",
+    "openai/gpt-oss-20b:free",
+    "qwen/qwen3-next-80b-a3b-instruct:free",
+    "qwen/qwen3-coder:free"
+  ];
 
-  if (!response.ok) {
-    const details = await response.text();
-    const error = new Error(`OpenRouter request failed: ${details}`);
-    error.statusCode = response.status;
-    throw error;
+  let lastError = null;
+
+  for (const model of MODELS) {
+    try {
+      console.log(`Trying model: ${model}`);
+
+      const response = await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: "system",
+                content: options.systemInstruction || "You are NOVA AI."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ]
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const details = await response.text();
+
+        if (
+          response.status === 429 ||
+          response.status === 503
+        ) {
+          console.log(`${model} unavailable, trying next model...`);
+          lastError = details;
+          continue;
+        }
+
+        const error = new Error(`OpenRouter request failed: ${details}`);
+        error.statusCode = response.status;
+        throw error;
+      }
+
+      const data = await response.json();
+
+      console.log(`Success using model: ${model}`);
+
+      return data.choices?.[0]?.message?.content?.trim() || "";
+    } catch (err) {
+      lastError = err.message;
+      console.error(`Model failed: ${model}`, err.message);
+    }
   }
+
+  const error = new Error(
+    `All fallback models failed. Last error: ${lastError}`
+  );
+  error.statusCode = 503;
+  throw error;
+}
 
   const data = await response.json();
 
