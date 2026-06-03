@@ -434,6 +434,7 @@ function parseMarkdown(text) {
   html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
 
   // Bold (**text** or __text__)
+  html = html.replace(/\*\txt?(.?.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/__(.+?)__/g, "<strong>$1</strong>");
 
@@ -480,6 +481,19 @@ function parseMarkdown(text) {
 }
 
 /**
+ * High-speed simple plaintext converter used during active streaming to prevent 
+ * full regular expression engine sweeps and layout thrashing across every frame iteration.
+ */
+function parseSimpleText(text) {
+  if (!text) return "";
+  return text
+    .replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]))
+    .split(/\n{2,}/)
+    .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
+
+/**
  * Renders formatted markdown content into a container element.
  */
 function renderFormattedText(container, text) {
@@ -517,7 +531,6 @@ function addMessage(container, type, text) {
   container.appendChild(wrapper);
   trimMessages(container);
   
-  // High-performance scroll anchoring logic
   container.scrollTop = container.scrollHeight;
   return bubble;
 }
@@ -547,8 +560,9 @@ function buildMessageActions(text) {
 }
 
 /**
- * Streams text into an AI message bubble with smooth character-by-character rendering.
- * Uses requestAnimationFrame-driven text integration to prevent UI thread execution locks.
+ * Streams text into an AI message bubble with blazing fast character block integration.
+ * Employs massive chunk sizes, ultra-low animation timers, and downscaled structural parsing 
+ * during execution frames to minimize UI locks and eliminate layout reflow limits.
  */
 async function streamMessage(element, text) {
   if (!element) return;
@@ -557,9 +571,9 @@ async function streamMessage(element, text) {
   element.classList.add("nova-formatted", "streaming");
 
   const totalChars = text.length;
-  // Adaptive batching: short messages look granular; long messages render larger tokens to match speed
-  const chunkSize = totalChars > 800 ? 12 : totalChars > 300 ? 6 : 3;
-  const baseDelay = totalChars > 500 ? 8 : totalChars > 200 ? 12 : 16;
+  // Maximum throughput configuration speeds up render processing across layout frameworks
+  const chunkSize = totalChars > 1200 ? 45 : totalChars > 600 ? 30 : totalChars > 200 ? 16 : 8;
+  const frameDelay = 4; // Blazing fast step iteration delay loop
 
   let index = 0;
   let buffer = "";
@@ -569,18 +583,20 @@ async function streamMessage(element, text) {
     if (index < totalChars) {
       buffer += text.slice(index, index + chunkSize);
       index += chunkSize;
-      element.innerHTML = parseMarkdown(buffer);
+
+      // Downscaled parsing during dynamic stream minimizes processing load per iteration tick
+      const hasStructuralMarkdown = buffer.includes("```") || buffer.includes("- ") || buffer.includes("1. ");
+      element.innerHTML = hasStructuralMarkdown ? parseMarkdown(buffer) : parseSimpleText(buffer);
 
       if (scrollContainer) {
-        // Fast layout evaluation prevents layout thrashing
-        const shouldScroll = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 150;
+        const shouldScroll = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 200;
         if (shouldScroll) {
           scrollContainer.scrollTop = scrollContainer.scrollHeight;
         }
       }
-      setTimeout(() => requestAnimationFrame(renderFrame), baseDelay);
+      setTimeout(() => requestAnimationFrame(renderFrame), frameDelay);
     } else {
-      // Final pass optimization
+      // Final comprehensive syntax verification structure pass
       element.innerHTML = parseMarkdown(text);
       element.classList.remove("streaming");
 
@@ -597,14 +613,13 @@ async function streamMessage(element, text) {
 
   requestAnimationFrame(renderFrame);
 
-  // Promise hooks ensure async synchronization with backend storage operations
   return new Promise((resolve) => {
     const checkDone = setInterval(() => {
       if (index >= totalChars) {
         clearInterval(checkDone);
         resolve();
       }
-    }, 50);
+    }, 20);
   });
 }
 
@@ -656,7 +671,6 @@ function createConversation(title) {
 }
 
 function renderActiveConversation() {
-  // Use DocumentFragments to append elements in batches instead of repeatedly causing repaints
   const chatFragment = document.createDocumentFragment();
   const overviewFragment = document.createDocumentFragment();
 
@@ -897,7 +911,7 @@ function setVoiceState(active) {
 function speakResponse(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const utterance = new SynthesisUtterance(text);
+  const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = 1;
   utterance.pitch = 1.05;
   window.speechSynthesis.speak(utterance);
@@ -1197,7 +1211,7 @@ async function generateImage() {
 
 function createPlaceholderImage(prompt) {
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="768" height="512" viewBox="0 0 768 512">
+    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="768" height="512" viewBox="0 0 768 512">
       <defs>
         <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
           <stop stop-color="#6C63FF"/>
@@ -1208,7 +1222,7 @@ function createPlaceholderImage(prompt) {
       <rect x="36" y="36" width="696" height="440" rx="24" fill="url(#bg)" opacity="0.22"/>
       <text x="54" y="96" fill="#FFFFFF" font-family="Arial" font-size="34" font-weight="700">NOVA AI Image Brief</text>
       <foreignObject x="54" y="130" width="660" height="280">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="color:white;font-family:Arial;font-size:22px;line-height:1.45">${escapeHtml(prompt)}</div>
+        <div xmlns="[http://www.w3.org/1999/xhtml](http://www.w3.org/1999/xhtml)" style="color:white;font-family:Arial;font-size:22px;line-height:1.45">${escapeHtml(prompt)}</div>
       </foreignObject>
     </svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -1310,7 +1324,7 @@ async function loadQuote() {
   const quoteAuthor = document.getElementById("quoteAuthor");
 
   try {
-    const response = await fetch("https://api.quotable.io/random");
+    const response = await fetch("[https://api.quotable.io/random](https://api.quotable.io/random)");
     if (!response.ok) throw new Error("Quote request failed");
     const data = await response.json();
     if (quoteText) quoteText.textContent = `"${data.content}"`;
