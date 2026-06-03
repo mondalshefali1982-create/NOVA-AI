@@ -72,7 +72,7 @@ async function callGemini(prompt, options = {}) {
             messages: [
               {
                 role: "system",
-                content: options.systemInstruction || "You are NOVA AI."
+                content:   options.systemInstruction ||   options.systemInstructions ||   "You are NOVA AI."
               },
               {
                 role: "user",
@@ -118,10 +118,7 @@ async function callGemini(prompt, options = {}) {
   throw error;
 }
 
-  const data = await response.json();
-
-  return data.choices?.[0]?.message?.content?.trim() || "";
-}
+ 
 
 function sendError(res, error) {
   const status = error.statusCode || 500;
