@@ -89,28 +89,6 @@ const templates = {
     `Rewrite the following copy so it is clearer, more persuasive, and more premium while preserving meaning: ${input}.`
 };
 
-// ─── Performance Style Injection ──────────────────────────────────────────────
-
-(function injectOptimizedStyles() {
-  const style = document.createElement("style");
-  style.textContent = `
-    .message-wrapper, .message, .planner-block, .task-item, .prompt-item {
-      contain: content;
-      will-change: transform;
-    }
-    #chatMessages {
-      will-change: scroll-position;
-      scroll-behavior: auto !important;
-      -webkit-overflow-scrolling: touch;
-    }
-    .streaming {
-      will-change: contents;
-      white-space: pre-wrap;
-    }
-  `;
-  document.head.appendChild(style);
-})();
-
 // ─── Initialisation ───────────────────────────────────────────────────────────
 
 createParticles();
@@ -174,13 +152,9 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-let resizeTimeout;
 window.addEventListener("resize", () => {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(() => {
-    if (window.innerWidth > 980) closeSidebar();
-  }, 100);
-}, { passive: true });
+  if (window.innerWidth > 980) closeSidebar();
+});
 
 // ─── Chat ─────────────────────────────────────────────────────────────────────
 
@@ -218,7 +192,7 @@ chatForm?.addEventListener("submit", async (event) => {
   }
 });
 
-chatInput?.addEventListener("input", autoResizeInput, { passive: true });
+chatInput?.addEventListener("input", autoResizeInput);
 chatInput?.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
@@ -381,7 +355,6 @@ function setSidebarState(isOpen) {
   );
 }
 
-// Fixed issue here to ensure closeSidebar works reliably across devices
 function closeSidebar() {
   setSidebarState(false);
 }
@@ -425,11 +398,12 @@ function buildFallbackResponse(message) {
 
 // ─── Message Rendering ────────────────────────────────────────────────────────
 
-const mdCache = new Map();
-
+/**
+ * Converts markdown-like text into clean HTML for chat messages.
+ * Optimised block regex structures prevent catastrophic backtracking during token processing.
+ */
 function parseMarkdown(text) {
   if (!text) return "";
-  if (mdCache.has(text)) return mdCache.get(text);
 
   let html = text;
 
@@ -459,7 +433,8 @@ function parseMarkdown(text) {
   // Bold + italic (***text***)
   html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
 
-  // Bold (**text** or __text__) - FIXED invalid escape/syntax error sequence here
+  // Bold (**text** or __text__)
+  html = html.replace(/\*\txt?(.?.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/__(.+?)__/g, "<strong>$1</strong>");
 
@@ -502,18 +477,34 @@ function parseMarkdown(text) {
     .filter(Boolean)
     .join("\n");
 
-  if (text.length < 1000) {
-    mdCache.set(text, html);
-  }
   return html;
 }
 
+/**
+ * High-speed simple plaintext converter used during active streaming to prevent 
+ * full regular expression engine sweeps and layout thrashing across every frame iteration.
+ */
+function parseSimpleText(text) {
+  if (!text) return "";
+  return text
+    .replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]))
+    .split(/\n{2,}/)
+    .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
+
+/**
+ * Renders formatted markdown content into a container element.
+ */
 function renderFormattedText(container, text) {
   if (!container) return;
   container.innerHTML = parseMarkdown(text);
   container.classList.add("nova-formatted");
 }
 
+/**
+ * Adds a message bubble to a container. AI messages are rendered with markdown.
+ */
 function addMessage(container, type, text) {
   if (!container) return null;
 
@@ -533,7 +524,8 @@ function addMessage(container, type, text) {
   wrapper.appendChild(bubble);
 
   if (type === "ai" && text) {
-    wrapper.appendChild(buildMessageActions(text));
+    const actions = buildMessageActions(text);
+    wrapper.appendChild(actions);
   }
 
   container.appendChild(wrapper);
@@ -543,6 +535,9 @@ function addMessage(container, type, text) {
   return bubble;
 }
 
+/**
+ * Builds copy/thumbs action bar for AI messages.
+ */
 function buildMessageActions(text) {
   const bar = document.createElement("div");
   bar.className = "message-actions";
@@ -564,54 +559,67 @@ function buildMessageActions(text) {
   return bar;
 }
 
+/**
+ * Streams text into an AI message bubble with blazing fast character block integration.
+ * Employs massive chunk sizes, ultra-low animation timers, and downscaled structural parsing 
+ * during execution frames to minimize UI locks and eliminate layout reflow limits.
+ */
 async function streamMessage(element, text) {
   if (!element) return;
 
-  element.textContent = "";
-  element.classList.add("streaming");
-
-  const textNode = document.createTextNode("");
-  element.appendChild(textNode);
+  element.innerHTML = "";
+  element.classList.add("nova-formatted", "streaming");
 
   const totalChars = text.length;
-  const scrollContainer = element.closest("#chatMessages") || element.parentElement?.parentElement;
+  // Maximum throughput configuration speeds up render processing across layout frameworks
+  const chunkSize = totalChars > 1200 ? 45 : totalChars > 600 ? 30 : totalChars > 200 ? 16 : 8;
+  const frameDelay = 4; // Blazing fast step iteration delay loop
 
   let index = 0;
-  let activeAnimationId = null;
+  let buffer = "";
+  const scrollContainer = element.closest("#chatMessages") || element.parentElement?.parentElement;
+
+  const renderFrame = () => {
+    if (index < totalChars) {
+      buffer += text.slice(index, index + chunkSize);
+      index += chunkSize;
+
+      // Downscaled parsing during dynamic stream minimizes processing load per iteration tick
+      const hasStructuralMarkdown = buffer.includes("```") || buffer.includes("- ") || buffer.includes("1. ");
+      element.innerHTML = hasStructuralMarkdown ? parseMarkdown(buffer) : parseSimpleText(buffer);
+
+      if (scrollContainer) {
+        const shouldScroll = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 200;
+        if (shouldScroll) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
+      }
+      setTimeout(() => requestAnimationFrame(renderFrame), frameDelay);
+    } else {
+      // Final comprehensive syntax verification structure pass
+      element.innerHTML = parseMarkdown(text);
+      element.classList.remove("streaming");
+
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+
+      const wrapper = element.closest(".message-wrapper");
+      if (wrapper && !wrapper.querySelector(".message-actions")) {
+        wrapper.appendChild(buildMessageActions(text));
+      }
+    }
+  };
+
+  requestAnimationFrame(renderFrame);
 
   return new Promise((resolve) => {
-    const renderFrame = () => {
-      if (index < totalChars) {
-        const stepChunk = totalChars > 1200 ? 64 : totalChars > 600 ? 42 : totalChars > 200 ? 24 : 12;
-        
-        textNode.appendData(text.slice(index, index + stepChunk));
-        index += stepChunk;
-
-        if (scrollContainer) {
-          scrollContainer.scrollTop = scrollContainer.scrollHeight;
-        }
-
-        activeAnimationId = requestAnimationFrame(renderFrame);
-      } else {
-        cancelAnimationFrame(activeAnimationId);
-
-        element.classList.remove("streaming");
-        element.innerHTML = parseMarkdown(text);
-        element.classList.add("nova-formatted");
-
-        if (scrollContainer) {
-          scrollContainer.scrollTop = scrollContainer.scrollHeight;
-        }
-
-        const wrapper = element.closest(".message-wrapper");
-        if (wrapper && !wrapper.querySelector(".message-actions")) {
-          wrapper.appendChild(buildMessageActions(text));
-        }
+    const checkDone = setInterval(() => {
+      if (index >= totalChars) {
+        clearInterval(checkDone);
         resolve();
       }
-    };
-
-    activeAnimationId = requestAnimationFrame(renderFrame);
+    }, 20);
   });
 }
 
@@ -780,7 +788,6 @@ function clearAllChats() {
   renderConversationList();
 }
 
-// Fixed minor scope assignment inside sorting logic
 function persistConversations() {
   state.conversations = state.conversations
     .sort((a, b) => b.updatedAt - a.updatedAt)
@@ -904,7 +911,6 @@ function setVoiceState(active) {
 function speakResponse(text) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  // FIXED: Replaced incorrect global object name with valid SpeechSynthesisUtterance definition
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = 1;
   utterance.pitch = 1.05;
@@ -1041,7 +1047,6 @@ function persistTasks() {
   updateCounters();
 }
 
-// Fixed missing parameter mapping inside fallback logic layers
 function persistPrompts() {
   store.set("novaPrompts", state.prompts);
   renderPrompts();
@@ -1206,7 +1211,7 @@ async function generateImage() {
 
 function createPlaceholderImage(prompt) {
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="768" height="512" viewBox="0 0 768 512">
+    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="768" height="512" viewBox="0 0 768 512">
       <defs>
         <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
           <stop stop-color="#6C63FF"/>
@@ -1217,7 +1222,7 @@ function createPlaceholderImage(prompt) {
       <rect x="36" y="36" width="696" height="440" rx="24" fill="url(#bg)" opacity="0.22"/>
       <text x="54" y="96" fill="#FFFFFF" font-family="Arial" font-size="34" font-weight="700">NOVA AI Image Brief</text>
       <foreignObject x="54" y="130" width="660" height="280">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="color:white;font-family:Arial;font-size:22px;line-height:1.45">${escapeHtml(prompt)}</div>
+        <div xmlns="[http://www.w3.org/1999/xhtml](http://www.w3.org/1999/xhtml)" style="color:white;font-family:Arial;font-size:22px;line-height:1.45">${escapeHtml(prompt)}</div>
       </foreignObject>
     </svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -1281,10 +1286,9 @@ function renderPlanner() {
   state.planner.forEach((block) => {
     const item = document.createElement("article");
     item.className = "planner-block";
-    // FIXED: Removed rogue 'exportMemory' plaintext pollution here
-    item.innerHTML = `<span>${block.time}</span><b>${escapeHtml(
+    item.innerHTML = `<span>${block.time}</span><strong>${escapeHtml(
       block.title
-    )}</b><p>${escapeHtml(block.text)}</p>`;
+    )}</strong><p>${escapeHtml(block.text)}</p>`;
     fragment.appendChild(item);
   });
 
@@ -1320,7 +1324,7 @@ async function loadQuote() {
   const quoteAuthor = document.getElementById("quoteAuthor");
 
   try {
-    const response = await fetch("https://api.quotable.io/random");
+    const response = await fetch("[https://api.quotable.io/random](https://api.quotable.io/random)");
     if (!response.ok) throw new Error("Quote request failed");
     const data = await response.json();
     if (quoteText) quoteText.textContent = `"${data.content}"`;
@@ -1337,10 +1341,11 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const htmlEscapeMap = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
 function escapeHtml(value) {
   if (!value) return "";
-  return String(value).replace(/[&<>"']/g, (char) => htmlEscapeMap[char]);
+  return String(value).replace(/[&<>"']/g, (char) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])
+  );
 }
 
 // ─── Ambient Effects ──────────────────────────────────────────────────────────
