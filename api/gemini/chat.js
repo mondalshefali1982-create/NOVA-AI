@@ -40,8 +40,10 @@ module.exports = async function handler(req, res) {
 
     try {
       const memories = await Memory.find({})
-        .sort({ createdAt: -1 })
-        .limit(10);
+  .sort({ createdAt: -1 })
+  .limit(10);
+
+console.log("MEMORIES FOUND:", JSON.stringify(memories));
 
       if (memories.length > 0) {
         memoryContext = memories
@@ -65,7 +67,8 @@ CURRENT USER REQUEST:
 
 ${message}
 `;
-
+console.log("PROMPT SENT TO GEMINI:");
+console.log(prompt);
     const text = await callGemini(prompt, {
       systemInstruction:
         "You are NOVA AI, a premium AI productivity assistant with memory. Use stored memories when relevant. Give practical, polished, and helpful answers.",
