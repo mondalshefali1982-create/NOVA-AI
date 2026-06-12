@@ -117,6 +117,7 @@ applySettings();
 renderAll();
 loadQuote();
 restoreChat();
+function restoreChat() {
 renderImages();
 renderPlanner();
 activatePanelFromHash();
