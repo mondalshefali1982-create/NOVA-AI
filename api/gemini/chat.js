@@ -1,3 +1,4 @@
+const { verifyToken } = require("../_utils/auth");
 const {
   callGemini,
   getBody,
@@ -10,7 +11,7 @@ const {
 const Memory = require("../_models/Memory");
 const connectDB = require("../_utils/db");
 
-async function saveMemoryIfRelevant(message) {
+async function saveMemoryIfRelevant(message, userId) {
   const patterns = [
     {
       regex: /my name is (.+)/i,
@@ -56,10 +57,11 @@ async function saveMemoryIfRelevant(message) {
 
       if (!existing) {
         await Memory.create({
-          content,
-          category: pattern.category,
-          importance: pattern.importance
-        });
+  userId,
+  content,
+  category: pattern.category,
+  importance: pattern.importance
+});
 
         console.log("MEMORY SAVED:", content);
       }
@@ -81,6 +83,14 @@ module.exports = async function handler(req, res) {
     await connectDB();
 
     const { message = "", history = [] } = getBody(req);
+    let userId = null;
+
+try {
+  const decoded = verifyToken(req);
+  userId = decoded.userId;
+} catch (error) {
+  console.log("No valid user token found");
+}
 
     if (!message.trim()) {
       return res.status(400).json({
@@ -89,7 +99,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Auto-save memories
-    await saveMemoryIfRelevant(message);
+    await saveMemoryIfRelevant(message, userId);
 
     const context = history
       .slice(-8)
@@ -102,7 +112,7 @@ module.exports = async function handler(req, res) {
     let memoryContext = "No memories stored.";
 
     try {
-      const memories = await Memory.find({})
+      const memories = userId   ? await Memory.find({ userId })       .sort({ createdAt: -1 })       .limit(20)   : [];
         .sort({ createdAt: -1 })
         .limit(20);
 
