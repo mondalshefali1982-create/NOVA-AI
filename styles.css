@@ -2453,3 +2453,14 @@ body[data-accent="indigo"] {
     transition-duration: 1ms !important;
   }
 }
+.voice-response{
+    margin-top:20px;
+    padding:16px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    color:white;
+    line-height:1.6;
+    min-height:60px;
+    white-space:pre-wrap;
+}
