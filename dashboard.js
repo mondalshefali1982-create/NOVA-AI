@@ -1150,68 +1150,187 @@ function trimMessages(container) {
   }
 }
 
-// ─── Voice Mode ───────────────────────────────────────────────────────────────
+// ─── Upgraded Conversational Voice Mode ────────────────────────────────────────
+
+function cleanTextForSpeech(text) {
+  if (!text) return "";
+  
+  let clean = text;
+  
+  // 1. Completely omit complex technical multi-line structural fences
+  clean = clean.replace(/```[\s\S]*?```/g, " [code block omitted] ");
+  
+  // 2. Clear horizontal rules and decorative dividers
+  clean = clean.replace(/^---+$/gm, "");
+  
+  // 3. Clean up Markdown links, converting [Display Text](url) to just "Display Text"
+  clean = clean.replace(/\[(.*?)\]\((.*?)\)/g, "$1");
+  
+  // 4. Strip structurally placed list bullets or markdown check indicators at start of lines
+  clean = clean.replace(/^[•\-*+]\s+/gm, ""); 
+  
+  // 5. Strip common text wrapper symbols (bold, italic, inline-code)
+  clean = clean.replace(/\*\*\*([^\*]+)\*\*\*/g, "$1");
+  clean = clean.replace(/\*\*([^\*]+)\*\*/g, "$1");
+  clean = clean.replace(/\*([^\*]+)\*/g, "$1");
+  clean = clean.replace(/`([^`]+)`/g, "$1");
+  clean = clean.replace(/__([^_]+)__/g, "$1");
+  clean = clean.replace(/_([^_]+)_/g, "$1");
+  
+  // 6. Contextually clear structural characters (like headings or blockquotes) 
+  // while safely ignoring hyphens or underscores tucked between word characters (\b)
+  clean = clean.replace(/(?:\s|^)[#*>+]+(?:\s|$)/g, " ");
+  
+  // 7. Clean up loose stray symbols that aren't parts of words
+  clean = clean.replace(/\s[#*>+]/g, " ");
+  
+  // 8. Condense multiple spaces and line-breaks down into standard spaces for smooth pacing
+  clean = clean.replace(/\n+/g, " ");
+  clean = clean.replace(/\s+/g, " ");
+  
+  return clean.trim();
+}
+
+async function askVoiceAI(message) {
+  const userName = state.currentUser?.name || "User";
+  const voiceSystemInstruction = `You are NOVA Voice Assistant. Speak naturally like a real human assistant. Rules: Never use markdown. Never use bullet points. Never use headings. Never use code blocks. Never use separators like ---. Never use hashtags. Never use asterisks. Never mention formatting. Use short conversational sentences. Sound friendly, intelligent, and professional. Keep answers concise and easy to listen to. Address the user naturally when appropriate.`;
+
+  const response = await callNovaBackend(NOVA_API_ROUTES.chat, {
+    message,
+    systemInstruction: voiceSystemInstruction,
+    history: getActiveConversation()?.messages.slice(-8) || []
+  });
+  return response.text;
+}
 
 function toggleVoiceMode() {
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
     if (voiceStatus) {
-      voiceStatus.textContent =
-        "Voice recognition isn't supported in this browser. Try Chrome on desktop or Android.";
+      voiceStatus.textContent = "Voice recognition isn't supported in this browser. Try Chrome on desktop.";
     }
+    return;
+  }
+
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    setVoiceVisualState("idle");
     return;
   }
 
   if (!recognition) {
     recognition = new SpeechRecognition();
-    recognition.lang =
-      state.settings.language === "hi"
-        ? "hi-IN"
-        : state.settings.language === "bn"
-        ? "bn-IN"
-        : "en-US";
+    recognition.lang = state.settings.language === "hi" ? "hi-IN" : state.settings.language === "bn" ? "bn-IN" : "en-US";
     recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setVoiceVisualState("listening");
+    };
 
     recognition.onresult = async (event) => {
       const transcript = event.results[0][0].transcript;
-      if (voiceStatus) voiceStatus.textContent = `You said: ${transcript}`;
-      const response = await askFreeAI(transcript).catch(() =>
-        buildFallbackResponse(transcript)
-      );
-      if (voiceStatus) voiceStatus.textContent = response;
-      speakResponse(response);
+      if (voiceStatus) voiceStatus.textContent = `You: ${transcript}`;
+      
+      setVoiceVisualState("thinking");
       saveChatMessage("user", transcript);
-      saveChatMessage("ai", response);
+
+      try {
+        const response = await askVoiceAI(transcript);
+        if (voiceStatus) voiceStatus.textContent = response;
+        
+        saveChatMessage("ai", response);
+        speakResponse(response);
+      } catch (err) {
+        const fallback = buildFallbackResponse(transcript);
+        const cleanFallback = cleanTextForSpeech(fallback);
+        if (voiceStatus) voiceStatus.textContent = cleanFallback;
+        speakResponse(cleanFallback);
+      }
     };
 
-    recognition.onend = () => setVoiceState(false);
+    recognition.onerror = () => {
+      setVoiceVisualState("idle");
+    };
+
+    recognition.onend = () => {
+      if (window.speechSynthesis && !window.speechSynthesis.speaking) {
+        setVoiceVisualState("idle");
+      }
+    };
   }
 
   if (isListening) {
     recognition.stop();
-    setVoiceState(false);
   } else {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
     recognition.start();
-    setVoiceState(true);
   }
 }
 
-function setVoiceState(active) {
-  isListening = active;
-  voiceOrb?.classList.toggle("listening", active);
-  if (voiceToggle) voiceToggle.textContent = active ? "Stop Listening" : "Start Listening";
-  if (active && voiceStatus) voiceStatus.textContent = "Listening…";
+function setVoiceVisualState(mode) {
+  isListening = (mode === "listening");
+  
+  if (!voiceOrb || !voiceToggle || !voiceStatus) return;
+
+  voiceOrb.classList.remove("listening", "thinking", "speaking");
+  
+  if (mode === "listening") {
+    voiceOrb.classList.add("listening");
+    voiceToggle.textContent = "Stop Listening";
+    voiceStatus.textContent = "Listening to you...";
+  } else if (mode === "thinking") {
+    voiceOrb.classList.add("thinking");
+    voiceToggle.textContent = "Cancel";
+    voiceStatus.textContent = "NOVA is processing...";
+  } else if (mode === "speaking") {
+    voiceOrb.classList.add("speaking");
+    voiceToggle.textContent = "Mute / Stop";
+    voiceStatus.textContent = "NOVA is speaking...";
+  } else {
+    voiceToggle.textContent = "Start Voice Mode";
+    voiceStatus.textContent = "Click start to talk with NOVA.";
+  }
 }
 
 function speakResponse(text) {
   if (!window.speechSynthesis) return;
+
   window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 1;
-  utterance.pitch = 1.05;
+
+  const cleanedText = cleanTextForSpeech(text);
+  const utterance = new SpeechSynthesisUtterance(cleanedText);
+  
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+
+  const voices = window.speechSynthesis.getVoices();
+  const premiumVoice = voices.find(v => 
+    (v.name.includes("Google") || v.name.includes("Natural")) && v.lang.startsWith("en")
+  ) || voices.find(v => v.lang.startsWith("en"));
+
+  if (premiumVoice) {
+    utterance.voice = premiumVoice;
+  }
+
+  utterance.onstart = () => {
+    setVoiceVisualState("speaking");
+  };
+
+  utterance.onend = () => {
+    setVoiceVisualState("idle");
+  };
+
+  utterance.onerror = () => {
+    setVoiceVisualState("idle");
+  };
+
   window.speechSynthesis.speak(utterance);
+}
+
+if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
 // ─── Command Palette ─────────────────────────────────────────────────────────
@@ -1410,7 +1529,7 @@ function setGreeting() {
   if (hour < 12) greeting = "Good Morning";
   else if (hour < 17) greeting = "Good Afternoon";
 
-  const name = state.currentUser?.name || "Rohan";
+  const name = state.currentUser?.name || "User";
   if (greetingTitle) greetingTitle.textContent = `${greeting}, ${name}`;
   if (greetingSubtitle) {
     greetingSubtitle.textContent =
@@ -1525,6 +1644,8 @@ function createPlaceholderImage(prompt) {
     </svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
+
+// ─── Ambient Effects ──────────────────────────────────────────────────────────
 
 function renderImages() {
   const gallery = document.getElementById("imageGallery");
@@ -1646,8 +1767,6 @@ function escapeHtml(value) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])
   );
 }
-
-// ─── Ambient Effects ──────────────────────────────────────────────────────────
 
 function addCursorGlow() {
   if (window.matchMedia("(pointer: coarse)").matches) return;
