@@ -117,7 +117,6 @@ applySettings();
 renderAll();
 loadQuote();
 restoreChat();
-function restoreChat() {
 renderImages();
 renderPlanner();
 activatePanelFromHash();
@@ -448,39 +447,58 @@ function clearAuthSession() {
   setGreeting();
 }
 
-function updateAuthUI() {
-  const isLoggedIn = Boolean(state.authToken && state.currentUser);
-
-  authForm?.classList.toggle("is-authenticated", isLoggedIn);
-  if (authFields) authFields.hidden = isLoggedIn;
-  if (loginBtn) loginBtn.hidden = isLoggedIn;
-  if (signupBtn) signupBtn.hidden = isLoggedIn;
-  if (logoutBtn) logoutBtn.hidden = !isLoggedIn;
-  if (authModeLabel) authModeLabel.textContent = isLoggedIn ? "Cloud" : "Guest";
-
-  if (isLoggedIn) {
-    if (authDisplayName) authDisplayName.value = state.currentUser?.name || "";
-    if (authEmail) authEmail.value = state.currentUser?.email || "";
-  }
-}
-
-function setAuthStatus(message) {
-  if (authStatus) authStatus.textContent = message;
-}
-
-function setAuthButtonsBusy(isBusy) {
-  [loginBtn, signupBtn, logoutBtn].forEach((button) => {
-    if (button) button.disabled = isBusy;
-  });
-}
-
 // ─── Command Palette ─────────────────────────────────────────────────────────
 
-commandPalette?.addEventListener("click", (event) => {
-  if (event.target === commandPalette) closeCommandPalette();
-});
+const commands = [
+  { label: "Open AI Chat", panel: "ai-chat" },
+  { label: "Open Voice Mode", panel: "voice-mode" },
+  { label: "Open AI Studio", panel: "studio" },
+  { label: "Open Planner", panel: "planner" },
+  { label: "Open Tasks", panel: "tasks" },
+  { label: "Open Cloud Sync", panel: "cloud" },
+  { label: "Open Settings", panel: "settings" },
+  { label: "Start New Chat", action: startNewChat }
+];
 
-commandInput?.addEventListener("input", renderCommands);
+function openCommandPalette() {
+  commandPalette?.classList.add("open");
+  commandPalette?.setAttribute("aria-hidden", "false");
+  if (commandInput) commandInput.value = "";
+  renderCommands();
+  commandInput?.focus();
+}
+
+function closeCommandPalette() {
+  commandPalette?.classList.remove("open");
+  commandPalette?.setAttribute("aria-hidden", "true");
+}
+
+function renderCommands() {
+  if (!commandResults) return;
+  const query = commandInput?.value.toLowerCase() || "";
+  commandResults.innerHTML = "";
+
+  const fragment = document.createDocumentFragment();
+
+  commands
+    .filter((cmd) => cmd.label.toLowerCase().includes(query))
+    .forEach((cmd) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = cmd.label;
+      button.addEventListener("click", () => {
+        if (cmd.panel) {
+          window.location.hash = cmd.panel;
+          activatePanel(cmd.panel);
+        }
+        if (cmd.action) cmd.action();
+        closeCommandPalette();
+      });
+      fragment.appendChild(button);
+    });
+
+  commandResults.appendChild(fragment);
+}
 
 // ─── Panel Management ─────────────────────────────────────────────────────────
 
@@ -511,23 +529,304 @@ function setSidebarState(isOpen) {
   );
 }
 
-// ─── Conversation Management ──────────────────────────────────────────────────
+// ─── Conversation Management Handlers ──────────────────────────────────────────
 
-function closeSidebar() {
-  setSidebarState(false);
+function restoreChat() {
+  migrateSingleChatHistory();
+  if (!state.activeConversationId || !getActiveConversation()) {
+    createConversation("New chat");
+  }
+  renderActiveConversation();
+  renderConversationList();
 }
 
-function saveChatMessage(type, text) {
-  const conversation = getActiveConversation() || createConversation("New chat");
-  conversation.messages.push({ type, text, createdAt: Date.now() });
-  conversation.updatedAt = Date.now();
+async function askFreeAI(message) {
+  const response = await callNovaBackend(NOVA_API_ROUTES.chat, {
+    message,
+    history: getActiveConversation()?.messages.slice(-8) || []
+  });
+  return response.text;
+}
 
-  if (type === "user" && conversation.title === "New chat") {
-    conversation.title = buildConversationTitle(text);
+async function callNovaBackend(route, payload) {
+  const headers = {
+    "Content-Type": "application/json"
+  };
+
+  if (state.authToken) {
+    headers.Authorization = `Bearer ${state.authToken}`;
   }
 
-  persistConversations();
-  renderConversationList();
+  const response = await fetch(`${NOVA_BACKEND_BASE_URL}${route}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      "The AI service is temporarily unavailable. Please try again shortly."
+    );
+  }
+
+  return response.json();
+}
+
+async function callNovaAuth(route, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
+
+  if (state.authToken) {
+    headers.Authorization = `Bearer ${state.authToken}`;
+  }
+
+  const response = await fetch(`${NOVA_BACKEND_BASE_URL}${route}`, {
+    ...options,
+    headers
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || "NOVA authentication request failed.");
+  }
+
+  return data;
+}
+
+function buildFallbackResponse(message) {
+  return `I'm having trouble reaching the AI service right now.\n\nHere's a quick framework to move forward with **"${message}"**:\n\n1. **Clarify the goal** — What's the single most important outcome?\n2. **Break it down** — Identify 3 focused next steps.\n3. **Start with the fastest win** — Pick the step you can complete right now.\n4. **Save your best prompt** — Use the prompt library to reuse this later.\n\nTry again in a moment and NOVA will give you a full response.`;
+}
+
+// ─── Message Rendering ────────────────────────────────────────────────────────
+
+/**
+ * Converts markdown-like text into clean HTML for chat messages.
+ * Optimised block regex structures prevent catastrophic backtracking during token processing.
+ */
+function parseMarkdown(text) {
+  if (!text) return "";
+
+  let html = text;
+
+  // Fenced code blocks (``` lang\n...\n```)
+  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const escaped = escapeHtml(code.trim());
+    const langLabel = lang ? `<span class="nova-code-lang">${escapeHtml(lang)}</span>` : "";
+    return `<div class="nova-code-block">${langLabel}<pre><code>${escaped}</code></pre></div>`;
+  });
+
+  // Inline code
+  html = html.replace(/`([^`\n]+)`/g, (_, code) => {
+    return `<code class="nova-inline-code">${escapeHtml(code)}</code>`;
+  });
+
+  // Headings (### ## #)
+  html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
+  html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");
+  html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+
+  // Horizontal rule
+  html = html.replace(/^---+$/gm, "<hr>");
+
+  // Blockquotes
+  html = html.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
+
+  // Bold + italic (***text***)
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
+
+  // Bold (**text** or __text__)
+  html = html.replace(/\*\txt?(.?.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/__(.+?)__/g, "<strong>$1</strong>");
+
+  // Italic (*text* or _text_)
+  html = html.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  html = html.replace(/_([^_\n]+)_/g, "<em>$1</em>");
+
+  // Unordered lists (lines starting with - or *)
+  html = html.replace(/((?:^[\s]*[-*] .+\n?)+)/gm, (block) => {
+    const items = block
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => `<li>${line.replace(/^[\s]*[-*] /, "")}</li>`)
+      .join("");
+    return `<ul>${items}</ul>`;
+  });
+
+  // Ordered lists (lines starting with 1. 2. etc.)
+  html = html.replace(/((?:^[\s]*\d+\. .+\n?)+)/gm, (block) => {
+    const items = block
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => `<li>${line.replace(/^[\s]*\d+\. /, "")}</li>`)
+      .join("");
+    return `<ol>${items}</ol>`;
+  });
+
+  // Paragraphs: split on double newlines, wrap non-block elements
+  const blockTags = /^<(h[1-6]|ul|ol|li|blockquote|pre|div|hr)/;
+  html = html
+    .split(/\n{2,}/)
+    .map((segment) => {
+      const trimmed = segment.trim();
+      if (!trimmed) return "";
+      if (blockTags.test(trimmed)) return trimmed;
+      return `<p>${trimmed.replace(/\n/g, "<br>")}</p>`;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  return html;
+}
+
+/**
+ * High-speed simple plaintext converter used during active streaming to prevent 
+ * full regular expression engine sweeps and layout thrashing across every frame iteration.
+ */
+function parseSimpleText(text) {
+  if (!text) return "";
+  return text
+    .replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]))
+    .split(/\n{2,}/)
+    .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
+
+/**
+ * Renders formatted markdown content into a container element.
+ */
+function renderFormattedText(container, text) {
+  if (!container) return;
+  container.innerHTML = parseMarkdown(text);
+  container.classList.add("nova-formatted");
+}
+
+/**
+ * Adds a message bubble to a container. AI messages are rendered with markdown.
+ */
+function addMessage(container, type, text) {
+  if (!container) return null;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = `message-wrapper ${type}`;
+
+  const bubble = document.createElement("div");
+  bubble.className = `message ${type}`;
+
+  if (type === "ai" && text) {
+    bubble.innerHTML = parseMarkdown(text);
+    bubble.classList.add("nova-formatted");
+  } else {
+    bubble.textContent = text;
+  }
+
+  wrapper.appendChild(bubble);
+
+  if (type === "ai" && text) {
+    const actions = buildMessageActions(text);
+    wrapper.appendChild(actions);
+  }
+
+  container.appendChild(wrapper);
+  trimMessages(container);
+  
+  container.scrollTop = container.scrollHeight;
+  return bubble;
+}
+
+/**
+ * Builds copy/thumbs action bar for AI messages.
+ */
+function buildMessageActions(text) {
+  const bar = document.createElement("div");
+  bar.className = "message-actions";
+
+  const copyBtn = document.createElement("button");
+  copyBtn.type = "button";
+  copyBtn.className = "msg-action-btn";
+  copyBtn.setAttribute("aria-label", "Copy message");
+  copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+  copyBtn.addEventListener("click", async () => {
+    await navigator.clipboard?.writeText(text).catch(() => {});
+    copyBtn.textContent = "Copied!";
+    setTimeout(() => {
+      copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+    }, 2000);
+  });
+
+  bar.appendChild(copyBtn);
+  return bar;
+}
+
+/**
+ * Streams text into an AI message bubble with blazing fast character block integration.
+ * Employs massive chunk sizes, ultra-low animation timers, and downscaled structural parsing 
+ * during execution frames to minimize UI locks and eliminate layout reflow limits.
+ */
+async function streamMessage(element, text) {
+  if (!element) return;
+
+  element.innerHTML = "";
+  element.classList.add("nova-formatted", "streaming");
+
+  const totalChars = text.length;
+  const chunkSize = totalChars > 1200 ? 45 : totalChars > 600 ? 30 : totalChars > 200 ? 16 : 8;
+  const frameDelay = 4;
+
+  let index = 0;
+  let buffer = "";
+  const scrollContainer = element.closest("#chatMessages") || element.parentElement?.parentElement;
+
+  const renderFrame = () => {
+    if (index < totalChars) {
+      buffer += text.slice(index, index + chunkSize);
+      index += chunkSize;
+
+      const hasStructuralMarkdown = buffer.includes("```") || buffer.includes("- ") || buffer.includes("1. ");
+      element.innerHTML = hasStructuralMarkdown ? parseMarkdown(buffer) : parseSimpleText(buffer);
+
+      if (scrollContainer) {
+        const shouldScroll = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 200;
+        if (shouldScroll) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        }
+      }
+      setTimeout(() => requestAnimationFrame(renderFrame), frameDelay);
+    } else {
+      element.innerHTML = parseMarkdown(text);
+      element.classList.remove("streaming");
+
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+
+      const wrapper = element.closest(".message-wrapper");
+      if (wrapper && !wrapper.querySelector(".message-actions")) {
+        wrapper.appendChild(buildMessageActions(text));
+      }
+    }
+  };
+
+  requestAnimationFrame(renderFrame);
+
+  return new Promise((resolve) => {
+    const checkDone = setInterval(() => {
+      if (index >= totalChars) {
+        clearInterval(checkDone);
+        resolve();
+      }
+    }, 20);
+  });
 }
 
 // ─── Upgraded Conversational Voice Mode ────────────────────────────────────────
@@ -599,7 +898,7 @@ function toggleVoiceMode() {
     return;
   }
 
-  // Ensure a persistent container element with id="voiceResponse" exists inside the Voice Mode panel frame
+  // Ensure a persistent container element with id="voiceResponse" exists inside the layout safely
   let dynamicResponseTarget = document.getElementById("voiceResponse");
   if (!dynamicResponseTarget) {
     const voicePanel = document.getElementById("voice-mode") || document.querySelector(".voice-interface-container") || document.body;
@@ -630,10 +929,8 @@ function toggleVoiceMode() {
         
         // Display full response inside the container card instantly, using high-speed markdown streaming
         if (dynamicResponseTarget) {
-  renderFormattedText(dynamicResponseTarget, response);
-          console.log("VOICE RESPONSE:", dynamicResponseTarget.innerHTML);
-          setVoiceVisualState("speaking")
-} else if (voiceStatus) {
+          await streamMessage(dynamicResponseTarget, response);
+        } else if (voiceStatus) {
           voiceStatus.textContent = response;
         }
         
@@ -690,13 +987,8 @@ function setVoiceVisualState(mode) {
   } else if (mode === "speaking") {
     voiceOrb.classList.add("speaking");
     voiceToggle.textContent = "Mute / Stop";
-
-    // Don't overwrite the AI response
-    if (voiceStatus &&
-        !voiceStatus.textContent.startsWith("You:")) {
-        voiceStatus.textContent = "🔊 NOVA is speaking...";
-    }
-}else {
+    voiceStatus.textContent = "NOVA is speaking...";
+  } else {
     voiceToggle.textContent = "Start Voice Mode";
     voiceStatus.textContent = "Click start to talk with NOVA.";
   }
@@ -742,345 +1034,10 @@ if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefin
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
-// ─── Conversation Handlers Continued ──────────────────────────────────────────
-
-function startNewChat() {
-  createConversation("New chat");
-  state.lastUserPrompt = "";
-  renderActiveConversation();
-  renderConversationList();
-}
-
-function getActiveConversation() {
-  return state.conversations.find((c) => c.id === state.activeConversationId);
-}
-
-function createConversation(title) {
-  const conversation = {
-    id: crypto.randomUUID(),
-    title,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    messages: [
-      {
-        type: "ai",
-        text: "Hello! I'm NOVA. What would you like to create, plan, or explore today?",
-        createdAt: Date.now()
-      }
-    ]
-  };
-
-  state.conversations.unshift(conversation);
-  state.activeConversationId = conversation.id;
-  persistConversations();
-  return conversation;
-}
-
-function renderActiveConversation() {
-  const chatFragment = document.createDocumentFragment();
-  const overviewFragment = document.createDocumentFragment();
-
-  if (chatMessages) chatMessages.innerHTML = "";
-  if (overviewMessages) overviewMessages.innerHTML = "";
-
-  const conversation = getActiveConversation();
-  if (!conversation) return;
-
-  conversation.messages.slice(-14).forEach((msg) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = `message-wrapper ${msg.type}`;
-    const bubble = document.createElement("div");
-    bubble.className = `message ${msg.type}`;
-
-    if (msg.type === "ai" && msg.text) {
-      bubble.innerHTML = parseMarkdown(msg.text);
-      bubble.classList.add("nova-formatted");
-      wrapper.appendChild(bubble);
-      wrapper.appendChild(buildMessageActions(msg.text));
-    } else {
-      bubble.textContent = msg.text;
-      wrapper.appendChild(bubble);
-    }
-    chatFragment.appendChild(wrapper);
-  });
-
-  conversation.messages.slice(-2).forEach((msg) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = `message-wrapper ${msg.type}`;
-    const bubble = document.createElement("div");
-    bubble.className = `message ${msg.type}`;
-
-    if (msg.type === "ai" && msg.text) {
-      bubble.innerHTML = parseMarkdown(msg.text);
-      bubble.classList.add("nova-formatted");
-      wrapper.appendChild(bubble);
-    } else {
-      bubble.textContent = msg.text;
-      wrapper.appendChild(bubble);
-    }
-    overviewFragment.appendChild(wrapper);
-  });
-
-  if (chatMessages) {
-    chatMessages.appendChild(chatFragment);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-  if (overviewMessages) {
-    overviewMessages.appendChild(overviewFragment);
-    overviewMessages.scrollTop = overviewMessages.scrollHeight;
-  }
-}
-
-function renderConversationList() {
-  if (!conversationList) return;
-  conversationList.innerHTML = "";
-
-  if (!state.conversations.length) {
-    conversationList.innerHTML =
-      '<div class="conversation-empty">No saved chats yet.</div>';
-    return;
-  }
-
-  const listFragment = document.createDocumentFragment();
-
-  state.conversations.forEach((conversation) => {
-    const item = document.createElement("article");
-    item.className = `conversation-item ${
-      conversation.id === state.activeConversationId ? "active" : ""
-    }`;
-    item.innerHTML = `
-      <button class="conversation-open" type="button">
-        <strong>${escapeHtml(conversation.title)}</strong>
-        <span>${formatConversationTime(conversation.updatedAt)}</span>
-      </button>
-      <button class="conversation-delete" type="button" aria-label="Delete ${escapeHtml(
-        conversation.title
-      )}">Delete</button>
-    `;
-
-    item.querySelector(".conversation-open").addEventListener("click", () => {
-      state.activeConversationId = conversation.id;
-      localStorage.setItem("novaActiveConversationId", state.activeConversationId);
-      renderActiveConversation();
-      renderConversationList();
-    });
-
-    item.querySelector(".conversation-delete").addEventListener("click", () => {
-      deleteConversation(conversation.id);
-    });
-
-    listFragment.appendChild(item);
-  });
-
-  conversationList.appendChild(listFragment);
-}
-
-function deleteConversation(id) {
-  state.conversations = state.conversations.filter((c) => c.id !== id);
-  if (state.activeConversationId === id) {
-    state.activeConversationId = state.conversations[0]?.id || "";
-  }
-  if (!state.activeConversationId) createConversation("New chat");
-  persistConversations();
-  deleteCloudConversation(id);
-  renderActiveConversation();
-  renderConversationList();
-}
-
-function clearAllChats() {
-  const deletedIds = state.conversations.map((conversation) => conversation.id);
-  state.conversations = [];
-  state.activeConversationId = "";
-  createConversation("New chat");
-  deletedIds.forEach(deleteCloudConversation);
-  renderActiveConversation();
-  renderConversationList();
-}
-
-function persistConversations(options = {}) {
-  state.conversations = state.conversations
-    .sort((a, b) => b.updatedAt - a.updatedAt)
-    .slice(0, 20);
-  store.set("novaConversations", state.conversations);
-  localStorage.setItem("novaActiveConversationId", state.activeConversationId);
-  if (options.sync !== false) scheduleCloudConversationSync();
-}
-
-async function loadCloudConversations() {
-  if (!state.authToken) return;
-
-  const data = await callNovaAuth(NOVA_API_ROUTES.sync, { method: "GET" });
-  const cloudConversations = Array.isArray(data.conversations) ? data.conversations : [];
-  mergeCloudAndLocalConversations(cloudConversations);
-  await syncAllConversationsToCloud();
-}
-
-function mergeCloudAndLocalConversations(cloudConversations = []) {
-  const merged = new Map();
-
-  [...cloudConversations, ...state.conversations].forEach((conversation) => {
-    const normalized = normalizeConversation(conversation);
-    if (!normalized?.id) return;
-
-    const existing = merged.get(normalized.id);
-    if (!existing || Number(normalized.updatedAt || 0) >= Number(existing.updatedAt || 0)) {
-      merged.set(normalized.id, normalized);
-    }
-  });
-
-  state.conversations = [...merged.values()]
-    .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))
-    .slice(0, 20);
-
-  if (!state.activeConversationId || !getActiveConversation()) {
-    state.activeConversationId = state.conversations[0]?.id || "";
-  }
-
-  if (!state.activeConversationId) {
-    createConversation("New chat");
-    return;
-  }
-
-  persistConversations({ sync: false });
-  renderActiveConversation();
-  renderConversationList();
-}
-
-function normalizeConversation(conversation) {
-  if (!conversation || typeof conversation !== "object") return null;
-  const now = Date.now();
-  return {
-    id: conversation.id || crypto.randomUUID(),
-    title: conversation.title || "New chat",
-    createdAt: Number(conversation.createdAt || now),
-    updatedAt: Number(conversation.updatedAt || conversation.createdAt || now),
-    messages: Array.isArray(conversation.messages)
-      ? conversation.messages
-          .filter((message) => message && message.type && typeof message.text === "string")
-          .map((message) => ({
-            type: message.type === "user" ? "user" : "ai",
-            text: message.text,
-            createdAt: Number(message.createdAt || now)
-          }))
-      : []
-  };
-}
-
-function scheduleCloudConversationSync() {
-  if (!state.authToken || state.isSyncingConversations) return;
-  clearTimeout(state.syncTimer);
-  state.syncTimer = window.setTimeout(syncAllConversationsToCloud, 900);
-}
-
-async function syncAllConversationsToCloud() {
-  if (!state.authToken || state.isSyncingConversations) return;
-
-  state.isSyncingConversations = true;
-
-  try {
-    for (const conversation of state.conversations) {
-      await callNovaAuth(NOVA_API_ROUTES.sync, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "upsert",
-          conversation: normalizeConversation(conversation)
-        })
-      });
-    }
-  } catch (error) {
-    setAuthStatus(`Cloud sync paused: ${error.message}`);
-  } finally {
-    state.isSyncingConversations = false;
-  }
-}
-
-async function deleteCloudConversation(id) {
-  if (!state.authToken || !id) return;
-
-  try {
-    await callNovaAuth(NOVA_API_ROUTES.sync, {
-      method: "POST",
-      body: JSON.stringify({ action: "delete", id })
-    });
-  } catch (error) {
-    setAuthStatus(`Cloud delete paused: ${error.message}`);
-  }
-}
-
-function migrateSingleChatHistory() {
-  const oldHistory = store.get("novaChatHistory", []);
-  if (!oldHistory.length || state.conversations.length) return;
-
-  state.conversations = [
-    {
-      id: crypto.randomUUID(),
-      title: "Previous NOVA chat",
-      createdAt: oldHistory[0]?.createdAt || Date.now(),
-      updatedAt: oldHistory.at(-1)?.createdAt || Date.now(),
-      messages: oldHistory
-    }
-  ];
-  state.activeConversationId = state.conversations[0].id;
-  persistConversations();
-  localStorage.removeItem("novaChatHistory");
-}
-
-// ─── Command Palette ─────────────────────────────────────────────────────────
-
-const commands = [
-  { label: "Open AI Chat", panel: "ai-chat" },
-  { label: "Open Voice Mode", panel: "voice-mode" },
-  { label: "Open AI Studio", panel: "studio" },
-  { label: "Open Planner", panel: "planner" },
-  { label: "Open Tasks", panel: "tasks" },
-  { label: "Open Cloud Sync", panel: "cloud" },
-  { label: "Open Settings", panel: "settings" },
-  { label: "Start New Chat", action: startNewChat }
-];
-
-function openCommandPalette() {
-  commandPalette?.classList.add("open");
-  commandPalette?.setAttribute("aria-hidden", "false");
-  if (commandInput) commandInput.value = "";
-  renderCommands();
-  commandInput?.focus();
-}
-
-function closeCommandPalette() {
-  commandPalette?.classList.remove("open");
-  commandPalette?.setAttribute("aria-hidden", "true");
-}
-
-function renderCommands() {
-  if (!commandResults) return;
-  const query = commandInput?.value.toLowerCase() || "";
-  commandResults.innerHTML = "";
-
-  const fragment = document.createDocumentFragment();
-
-  commands
-    .filter((cmd) => cmd.label.toLowerCase().includes(query))
-    .forEach((cmd) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = cmd.label;
-      button.addEventListener("click", () => {
-        if (cmd.panel) {
-          window.location.hash = cmd.panel;
-          activatePanel(cmd.panel);
-        }
-        if (cmd.action) cmd.action();
-        closeCommandPalette();
-      });
-      fragment.appendChild(button);
-    });
-
-  commandResults.appendChild(fragment);
-}
-
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
 function renderTasks() {
+  if (!taskList) return;
   taskList.innerHTML = "";
   if (!state.tasks.length) {
     taskList.innerHTML =
@@ -1115,6 +1072,7 @@ function renderTasks() {
 // ─── Saved Prompts ────────────────────────────────────────────────────────────
 
 function renderPrompts() {
+  if (!promptList) return;
   promptList.innerHTML = "";
   if (!state.prompts.length) {
     promptList.innerHTML = '<div class="prompt-item"><span>No saved prompts yet.</span></div>';
@@ -1320,9 +1278,9 @@ async function generateImage() {
 
 function createPlaceholderImage(prompt) {
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="768" height="512" viewBox="0 0 768 512">
+    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="768" height="512" viewBox="0 0 768 512">
       <defs>
-        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+        <linearGradient id="bg" x1="0" x2="1" y1="0" x2="1">
           <stop stop-color="#6C63FF"/>
           <stop offset="1" stop-color="#00D4FF"/>
         </linearGradient>
@@ -1331,7 +1289,7 @@ function createPlaceholderImage(prompt) {
       <rect x="36" y="36" width="696" height="440" rx="24" fill="url(#bg)" opacity="0.22"/>
       <text x="54" y="96" fill="#FFFFFF" font-family="Arial" font-size="34" font-weight="700">NOVA AI Image Brief</text>
       <foreignObject x="54" y="130" width="660" height="280">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="color:white;font-family:Arial;font-size:22px;line-height:1.45">${escapeHtml(prompt)}</div>
+        <div xmlns="[http://www.w3.org/1999/xhtml](http://www.w3.org/1999/xhtml)" style="color:white;font-family:Arial;font-size:22px;line-height:1.45">${escapeHtml(prompt)}</div>
       </foreignObject>
     </svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -1434,7 +1392,7 @@ async function loadQuote() {
   const quoteAuthor = document.getElementById("quoteAuthor");
 
   try {
-    const response = await fetch("https://api.quotable.io/random");
+    const response = await fetch("[https://api.quotable.io/random](https://api.quotable.io/random)");
     if (!response.ok) throw new Error("Quote request failed");
     const data = await response.json();
     if (quoteText) quoteText.textContent = `"${data.content}"`;
