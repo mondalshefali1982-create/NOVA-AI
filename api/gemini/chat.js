@@ -112,20 +112,22 @@ try {
     let memoryContext = "No memories stored.";
 
     try {
-      const memories = userId   ? await Memory.find({ userId })       .sort({ createdAt: -1 })       .limit(20)   : [];
+  const memories = userId
+    ? await Memory.find({ userId })
         .sort({ createdAt: -1 })
-        .limit(20);
+        .limit(20)
+    : [];
 
-      console.log("MEMORIES FOUND:", memories.length);
+  console.log("MEMORIES FOUND:", memories.length);
 
-      if (memories.length > 0) {
-        memoryContext = memories
-          .map((m) => `- ${m.content}`)
-          .join("\n");
-      }
-    } catch (memoryError) {
-      console.error("Memory load error:", memoryError);
-    }
+  if (memories.length > 0) {
+    memoryContext = memories
+      .map((m) => `- ${m.content}`)
+      .join("\n");
+  }
+} catch (memoryError) {
+  console.error("Memory load error:", memoryError);
+}
 
     const prompt = `
 USER MEMORIES:
