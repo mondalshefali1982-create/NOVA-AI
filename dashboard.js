@@ -630,6 +630,8 @@ function toggleVoiceMode() {
         // Display full response inside the container card instantly, using high-speed markdown streaming
         if (dynamicResponseTarget) {
   renderFormattedText(dynamicResponseTarget, response);
+          console.log("VOICE RESPONSE:", dynamicResponseTarget.innerHTML);
+          setVoiceVisualState("speaking")
 } else if (voiceStatus) {
           voiceStatus.textContent = response;
         }
@@ -687,8 +689,13 @@ function setVoiceVisualState(mode) {
   } else if (mode === "speaking") {
     voiceOrb.classList.add("speaking");
     voiceToggle.textContent = "Mute / Stop";
-    voiceStatus.textContent = "NOVA is speaking...";
-  } else {
+
+    // Don't overwrite the AI response
+    if (voiceStatus &&
+        !voiceStatus.textContent.startsWith("You:")) {
+        voiceStatus.textContent = "🔊 NOVA is speaking...";
+    }
+}else {
     voiceToggle.textContent = "Start Voice Mode";
     voiceStatus.textContent = "Click start to talk with NOVA.";
   }
