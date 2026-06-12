@@ -80,6 +80,7 @@ const commandResults = document.getElementById("commandResults");
 const voiceStatus = document.getElementById("voiceStatus");
 const voiceToggle = document.getElementById("voiceToggle");
 const voiceOrb = document.getElementById("voiceOrb");
+const voiceResponse = document.getElementById("voiceResponse");
 const authForm = document.getElementById("authForm");
 const authFields = document.getElementById("authFields");
 const authDisplayName = document.getElementById("authDisplayName");
@@ -509,313 +510,11 @@ function setSidebarState(isOpen) {
   );
 }
 
+// ─── Conversation Management ──────────────────────────────────────────────────
+
 function closeSidebar() {
   setSidebarState(false);
 }
-
-// ─── Chat & Conversations ─────────────────────────────────────────────────────
-
-function restoreChat() {
-  migrateSingleChatHistory();
-  if (!state.activeConversationId || !getActiveConversation()) {
-    createConversation("New chat");
-  }
-  renderActiveConversation();
-  renderConversationList();
-}
-
-async function askFreeAI(message) {
-  const response = await callNovaBackend(NOVA_API_ROUTES.chat, {
-    message,
-    history: getActiveConversation()?.messages.slice(-8) || []
-  });
-  return response.text;
-}
-
-async function callNovaBackend(route, payload) {
-  const headers = {
-    "Content-Type": "application/json"
-  };
-
-  if (state.authToken) {
-    headers.Authorization = `Bearer ${state.authToken}`;
-  }
-
-  const response = await fetch(`${NOVA_BACKEND_BASE_URL}${route}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      "The AI service is temporarily unavailable. Please try again shortly."
-    );
-  }
-
-  return response.json();
-}
-async function callNovaAuth(route, options = {}) {
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {})
-  };
-
-  if (state.authToken) {
-    headers.Authorization = `Bearer ${state.authToken}`;
-  }
-
-  const response = await fetch(`${NOVA_BACKEND_BASE_URL}${route}`, {
-    ...options,
-    headers
-  });
-
-  let data = {};
-  try {
-    data = await response.json();
-  } catch {
-    data = {};
-  }
-
-  if (!response.ok) {
-    throw new Error(data.error || "NOVA authentication request failed.");
-  }
-
-  return data;
-}
-
-function buildFallbackResponse(message) {
-  return `I'm having trouble reaching the AI service right now.\n\nHere's a quick framework to move forward with **"${message}"**:\n\n1. **Clarify the goal** — What's the single most important outcome?\n2. **Break it down** — Identify 3 focused next steps.\n3. **Start with the fastest win** — Pick the step you can complete right now.\n4. **Save your best prompt** — Use the prompt library to reuse this later.\n\nTry again in a moment and NOVA will give you a full response.`;
-}
-
-// ─── Message Rendering ────────────────────────────────────────────────────────
-
-/**
- * Converts markdown-like text into clean HTML for chat messages.
- * Optimised block regex structures prevent catastrophic backtracking during token processing.
- */
-function parseMarkdown(text) {
-  if (!text) return "";
-
-  let html = text;
-
-  // Fenced code blocks (``` lang\n...\n```)
-  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-    const escaped = escapeHtml(code.trim());
-    const langLabel = lang ? `<span class="nova-code-lang">${escapeHtml(lang)}</span>` : "";
-    return `<div class="nova-code-block">${langLabel}<pre><code>${escaped}</code></pre></div>`;
-  });
-
-  // Inline code
-  html = html.replace(/`([^`\n]+)`/g, (_, code) => {
-    return `<code class="nova-inline-code">${escapeHtml(code)}</code>`;
-  });
-
-  // Headings (### ## #)
-  html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
-  html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");
-  html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>");
-
-  // Horizontal rule
-  html = html.replace(/^---+$/gm, "<hr>");
-
-  // Blockquotes
-  html = html.replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>");
-
-  // Bold + italic (***text***)
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
-
-  // Bold (**text** or __text__)
-  html = html.replace(/\*\txt?(.?.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/__(.+?)__/g, "<strong>$1</strong>");
-
-  // Italic (*text* or _text_)
-  html = html.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
-  html = html.replace(/_([^_\n]+)_/g, "<em>$1</em>");
-
-  // Unordered lists (lines starting with - or *)
-  html = html.replace(/((?:^[\s]*[-*] .+\n?)+)/gm, (block) => {
-    const items = block
-      .trim()
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => `<li>${line.replace(/^[\s]*[-*] /, "")}</li>`)
-      .join("");
-    return `<ul>${items}</ul>`;
-  });
-
-  // Ordered lists (lines starting with 1. 2. etc.)
-  html = html.replace(/((?:^[\s]*\d+\. .+\n?)+)/gm, (block) => {
-    const items = block
-      .trim()
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => `<li>${line.replace(/^[\s]*\d+\. /, "")}</li>`)
-      .join("");
-    return `<ol>${items}</ol>`;
-  });
-
-  // Paragraphs: split on double newlines, wrap non-block elements
-  const blockTags = /^<(h[1-6]|ul|ol|li|blockquote|pre|div|hr)/;
-  html = html
-    .split(/\n{2,}/)
-    .map((segment) => {
-      const trimmed = segment.trim();
-      if (!trimmed) return "";
-      if (blockTags.test(trimmed)) return trimmed;
-      return `<p>${trimmed.replace(/\n/g, "<br>")}</p>`;
-    })
-    .filter(Boolean)
-    .join("\n");
-
-  return html;
-}
-
-/**
- * High-speed simple plaintext converter used during active streaming to prevent 
- * full regular expression engine sweeps and layout thrashing across every frame iteration.
- */
-function parseSimpleText(text) {
-  if (!text) return "";
-  return text
-    .replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]))
-    .split(/\n{2,}/)
-    .map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`)
-    .join("");
-}
-
-/**
- * Renders formatted markdown content into a container element.
- */
-function renderFormattedText(container, text) {
-  if (!container) return;
-  container.innerHTML = parseMarkdown(text);
-  container.classList.add("nova-formatted");
-}
-
-/**
- * Adds a message bubble to a container. AI messages are rendered with markdown.
- */
-function addMessage(container, type, text) {
-  if (!container) return null;
-
-  const wrapper = document.createElement("div");
-  wrapper.className = `message-wrapper ${type}`;
-
-  const bubble = document.createElement("div");
-  bubble.className = `message ${type}`;
-
-  if (type === "ai" && text) {
-    bubble.innerHTML = parseMarkdown(text);
-    bubble.classList.add("nova-formatted");
-  } else {
-    bubble.textContent = text;
-  }
-
-  wrapper.appendChild(bubble);
-
-  if (type === "ai" && text) {
-    const actions = buildMessageActions(text);
-    wrapper.appendChild(actions);
-  }
-
-  container.appendChild(wrapper);
-  trimMessages(container);
-  
-  container.scrollTop = container.scrollHeight;
-  return bubble;
-}
-
-/**
- * Builds copy/thumbs action bar for AI messages.
- */
-function buildMessageActions(text) {
-  const bar = document.createElement("div");
-  bar.className = "message-actions";
-
-  const copyBtn = document.createElement("button");
-  copyBtn.type = "button";
-  copyBtn.className = "msg-action-btn";
-  copyBtn.setAttribute("aria-label", "Copy message");
-  copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
-  copyBtn.addEventListener("click", async () => {
-    await navigator.clipboard?.writeText(text).catch(() => {});
-    copyBtn.textContent = "Copied!";
-    setTimeout(() => {
-      copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
-    }, 2000);
-  });
-
-  bar.appendChild(copyBtn);
-  return bar;
-}
-
-/**
- * Streams text into an AI message bubble with blazing fast character block integration.
- * Employs massive chunk sizes, ultra-low animation timers, and downscaled structural parsing 
- * during execution frames to minimize UI locks and eliminate layout reflow limits.
- */
-async function streamMessage(element, text) {
-  if (!element) return;
-
-  element.innerHTML = "";
-  element.classList.add("nova-formatted", "streaming");
-
-  const totalChars = text.length;
-  // Maximum throughput configuration speeds up render processing across layout frameworks
-  const chunkSize = totalChars > 1200 ? 45 : totalChars > 600 ? 30 : totalChars > 200 ? 16 : 8;
-  const frameDelay = 4; // Blazing fast step iteration delay loop
-
-  let index = 0;
-  let buffer = "";
-  const scrollContainer = element.closest("#chatMessages") || element.parentElement?.parentElement;
-
-  const renderFrame = () => {
-    if (index < totalChars) {
-      buffer += text.slice(index, index + chunkSize);
-      index += chunkSize;
-
-      // Downscaled parsing during dynamic stream minimizes processing load per iteration tick
-      const hasStructuralMarkdown = buffer.includes("```") || buffer.includes("- ") || buffer.includes("1. ");
-      element.innerHTML = hasStructuralMarkdown ? parseMarkdown(buffer) : parseSimpleText(buffer);
-
-      if (scrollContainer) {
-        const shouldScroll = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 200;
-        if (shouldScroll) {
-          scrollContainer.scrollTop = scrollContainer.scrollHeight;
-        }
-      }
-      setTimeout(() => requestAnimationFrame(renderFrame), frameDelay);
-    } else {
-      // Final comprehensive syntax verification structure pass
-      element.innerHTML = parseMarkdown(text);
-      element.classList.remove("streaming");
-
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-
-      const wrapper = element.closest(".message-wrapper");
-      if (wrapper && !wrapper.querySelector(".message-actions")) {
-        wrapper.appendChild(buildMessageActions(text));
-      }
-    }
-  };
-
-  requestAnimationFrame(renderFrame);
-
-  return new Promise((resolve) => {
-    const checkDone = setInterval(() => {
-      if (index >= totalChars) {
-        clearInterval(checkDone);
-        resolve();
-      }
-    }, 20);
-  });
-}
-
-// ─── Conversation Management ──────────────────────────────────────────────────
 
 function saveChatMessage(type, text) {
   const conversation = getActiveConversation() || createConversation("New chat");
@@ -829,6 +528,213 @@ function saveChatMessage(type, text) {
   persistConversations();
   renderConversationList();
 }
+
+// ─── Upgraded Conversational Voice Mode ────────────────────────────────────────
+
+function cleanTextForSpeech(text) {
+  if (!text) return "";
+  
+  let clean = text;
+  
+  // 1. Completely omit complex technical multi-line structural fences
+  clean = clean.replace(/```[\s\S]*?```/g, " [code block omitted] ");
+  
+  // 2. Clear horizontal rules and decorative dividers
+  clean = clean.replace(/^---+$/gm, "");
+  
+  // 3. Clean up Markdown links, converting [Display Text](url) to just "Display Text"
+  clean = clean.replace(/\[(.*?)\]\((.*?)\)/g, "$1");
+  
+  // 4. Strip structurally placed list bullets or markdown check indicators at start of lines
+  clean = clean.replace(/^[•\-*+]\s+/gm, ""); 
+  
+  // 5. Strip common text wrapper symbols (bold, italic, inline-code)
+  clean = clean.replace(/\*\*\*([^\*]+)\*\*\*/g, "$1");
+  clean = clean.replace(/\*\*([^\*]+)\*\*/g, "$1");
+  clean = clean.replace(/\*([^\*]+)\*/g, "$1");
+  clean = clean.replace(/`([^`]+)`/g, "$1");
+  clean = clean.replace(/__([^_]+)__/g, "$1");
+  clean = clean.replace(/_([^_]+)_/g, "$1");
+  
+  // 6. Contextually clear structural characters (like headings or blockquotes) 
+  // while safely ignoring hyphens or underscores tucked between word characters (\b)
+  clean = clean.replace(/(?:\s|^)[#*>+]+(?:\s|$)/g, " ");
+  
+  // 7. Clean up loose stray symbols that aren't parts of words
+  clean = clean.replace(/\s[#*>+]/g, " ");
+  
+  // 8. Condense multiple spaces and line-breaks down into standard spaces for smooth pacing
+  clean = clean.replace(/\n+/g, " ");
+  clean = clean.replace(/\s+/g, " ");
+  
+  return clean.trim();
+}
+
+async function askVoiceAI(message) {
+  const userName = state.currentUser?.name || "User";
+  const voiceSystemInstruction = `You are NOVA Voice Assistant. Speak naturally like a real human assistant. Rules: Never use markdown. Never use bullet points. Never use headings. Never use code blocks. Never use separators like ---. Never use hashtags. Never use asterisks. Never mention formatting. Use short conversational sentences. Sound friendly, intelligent, and professional. Keep answers concise and easy to listen to. Address the user naturally when appropriate.`;
+
+  const response = await callNovaBackend(NOVA_API_ROUTES.chat, {
+    message,
+    systemInstruction: voiceSystemInstruction,
+    history: getActiveConversation()?.messages.slice(-8) || []
+  });
+  return response.text;
+}
+
+function toggleVoiceMode() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    if (voiceStatus) {
+      voiceStatus.textContent = "Voice recognition isn't supported in this browser. Try Chrome on desktop.";
+    }
+    return;
+  }
+
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    setVoiceVisualState("idle");
+    return;
+  }
+
+  // Ensure a persistent container element with id="voiceResponse" exists inside the Voice Mode panel frame
+  let dynamicResponseTarget = document.getElementById("voiceResponse");
+  if (!dynamicResponseTarget) {
+    const voicePanel = document.getElementById("voice-mode") || document.querySelector(".voice-interface-container") || document.body;
+    dynamicResponseTarget = document.createElement("div");
+    dynamicResponseTarget.id = "voiceResponse";
+    dynamicResponseTarget.className = "voice-response";
+    voicePanel.appendChild(dynamicResponseTarget);
+  }
+
+  if (!recognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = state.settings.language === "hi" ? "hi-IN" : state.settings.language === "bn" ? "bn-IN" : "en-US";
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setVoiceVisualState("listening");
+    };
+
+    recognition.onresult = async (event) => {
+      const transcript = event.results[0][0].transcript;
+      if (voiceStatus) voiceStatus.textContent = `You: ${transcript}`;
+      
+      setVoiceVisualState("thinking");
+      saveChatMessage("user", transcript);
+
+      try {
+        const response = await askVoiceAI(transcript);
+        
+        // Display full response inside the container card instantly, using high-speed markdown streaming
+        if (dynamicResponseTarget) {
+  renderFormattedText(dynamicResponseTarget, response);
+} else if (voiceStatus) {
+          voiceStatus.textContent = response;
+        }
+        
+        saveChatMessage("ai", response);
+        speakResponse(response);
+      } catch (err) {
+        const fallback = buildFallbackResponse(transcript);
+        const cleanFallback = cleanTextForSpeech(fallback);
+        if (dynamicResponseTarget) {
+          renderFormattedText(dynamicResponseTarget, fallback);
+        } else if (voiceStatus) {
+          voiceStatus.textContent = cleanFallback;
+        }
+        speakResponse(cleanFallback);
+      }
+    };
+
+    recognition.onerror = () => {
+      setVoiceVisualState("idle");
+    };
+
+    recognition.onend = () => {
+      if (window.speechSynthesis && !window.speechSynthesis.speaking) {
+        setVoiceVisualState("idle");
+      }
+    };
+  }
+
+  if (isListening) {
+    recognition.stop();
+  } else {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    // Flush container canvas to clear prior frames when starting a fresh microphone cycle
+    if (dynamicResponseTarget) dynamicResponseTarget.innerHTML = "";
+    recognition.start();
+  }
+}
+
+function setVoiceVisualState(mode) {
+  isListening = (mode === "listening");
+  
+  if (!voiceOrb || !voiceToggle || !voiceStatus) return;
+
+  voiceOrb.classList.remove("listening", "thinking", "speaking");
+  
+  if (mode === "listening") {
+    voiceOrb.classList.add("listening");
+    voiceToggle.textContent = "Stop Listening";
+    voiceStatus.textContent = "Listening to you...";
+  } else if (mode === "thinking") {
+    voiceOrb.classList.add("thinking");
+    voiceToggle.textContent = "Cancel";
+    voiceStatus.textContent = "NOVA is processing...";
+  } else if (mode === "speaking") {
+    voiceOrb.classList.add("speaking");
+    voiceToggle.textContent = "Mute / Stop";
+    voiceStatus.textContent = "NOVA is speaking...";
+  } else {
+    voiceToggle.textContent = "Start Voice Mode";
+    voiceStatus.textContent = "Click start to talk with NOVA.";
+  }
+}
+
+function speakResponse(text) {
+  if (!window.speechSynthesis) return;
+
+  window.speechSynthesis.cancel();
+
+  const cleanedText = cleanTextForSpeech(text);
+  const utterance = new SpeechSynthesisUtterance(cleanedText);
+  
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+
+  const voices = window.speechSynthesis.getVoices();
+  const premiumVoice = voices.find(v => 
+    (v.name.includes("Google") || v.name.includes("Natural")) && v.lang.startsWith("en")
+  ) || voices.find(v => v.lang.startsWith("en"));
+
+  if (premiumVoice) {
+    utterance.voice = premiumVoice;
+  }
+
+  utterance.onstart = () => {
+    setVoiceVisualState("speaking");
+  };
+
+  utterance.onend = () => {
+    setVoiceVisualState("idle");
+  };
+
+  utterance.onerror = () => {
+    setVoiceVisualState("idle");
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// ─── Conversation Handlers Continued ──────────────────────────────────────────
 
 function startNewChat() {
   createConversation("New chat");
@@ -1109,228 +1015,6 @@ function migrateSingleChatHistory() {
   state.activeConversationId = state.conversations[0].id;
   persistConversations();
   localStorage.removeItem("novaChatHistory");
-}
-
-function buildConversationTitle(text) {
-  return text.length > 42 ? `${text.slice(0, 42)}…` : text;
-}
-
-function formatConversationTime(timestamp) {
-  const minutes = Math.max(1, Math.round((Date.now() - timestamp) / 60_000));
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.round(hours / 24)}d`;
-}
-
-// ─── Typing Indicator ─────────────────────────────────────────────────────────
-
-function addTypingMessage(container) {
-  const wrapper = document.createElement("div");
-  wrapper.className = "message-wrapper ai";
-
-  const bubble = document.createElement("div");
-  bubble.className = "message ai typing-bubble";
-  bubble.innerHTML = `
-    <span class="typing">
-      <span></span>
-      <span></span>
-      <span></span>
-    </span>`;
-
-  wrapper.appendChild(bubble);
-  container.appendChild(wrapper);
-  container.scrollTop = container.scrollHeight;
-  return wrapper;
-}
-
-function trimMessages(container) {
-  while (container.children.length > 40) {
-    container.removeChild(container.firstElementChild);
-  }
-}
-
-// ─── Upgraded Conversational Voice Mode ────────────────────────────────────────
-
-function cleanTextForSpeech(text) {
-  if (!text) return "";
-  
-  let clean = text;
-  
-  // 1. Completely omit complex technical multi-line structural fences
-  clean = clean.replace(/```[\s\S]*?```/g, " [code block omitted] ");
-  
-  // 2. Clear horizontal rules and decorative dividers
-  clean = clean.replace(/^---+$/gm, "");
-  
-  // 3. Clean up Markdown links, converting [Display Text](url) to just "Display Text"
-  clean = clean.replace(/\[(.*?)\]\((.*?)\)/g, "$1");
-  
-  // 4. Strip structurally placed list bullets or markdown check indicators at start of lines
-  clean = clean.replace(/^[•\-*+]\s+/gm, ""); 
-  
-  // 5. Strip common text wrapper symbols (bold, italic, inline-code)
-  clean = clean.replace(/\*\*\*([^\*]+)\*\*\*/g, "$1");
-  clean = clean.replace(/\*\*([^\*]+)\*\*/g, "$1");
-  clean = clean.replace(/\*([^\*]+)\*/g, "$1");
-  clean = clean.replace(/`([^`]+)`/g, "$1");
-  clean = clean.replace(/__([^_]+)__/g, "$1");
-  clean = clean.replace(/_([^_]+)_/g, "$1");
-  
-  // 6. Contextually clear structural characters (like headings or blockquotes) 
-  // while safely ignoring hyphens or underscores tucked between word characters (\b)
-  clean = clean.replace(/(?:\s|^)[#*>+]+(?:\s|$)/g, " ");
-  
-  // 7. Clean up loose stray symbols that aren't parts of words
-  clean = clean.replace(/\s[#*>+]/g, " ");
-  
-  // 8. Condense multiple spaces and line-breaks down into standard spaces for smooth pacing
-  clean = clean.replace(/\n+/g, " ");
-  clean = clean.replace(/\s+/g, " ");
-  
-  return clean.trim();
-}
-
-async function askVoiceAI(message) {
-  const userName = state.currentUser?.name || "User";
-  const voiceSystemInstruction = `You are NOVA Voice Assistant. Speak naturally like a real human assistant. Rules: Never use markdown. Never use bullet points. Never use headings. Never use code blocks. Never use separators like ---. Never use hashtags. Never use asterisks. Never mention formatting. Use short conversational sentences. Sound friendly, intelligent, and professional. Keep answers concise and easy to listen to. Address the user naturally when appropriate.`;
-
-  const response = await callNovaBackend(NOVA_API_ROUTES.chat, {
-    message,
-    systemInstruction: voiceSystemInstruction,
-    history: getActiveConversation()?.messages.slice(-8) || []
-  });
-  return response.text;
-}
-
-function toggleVoiceMode() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  if (!SpeechRecognition) {
-    if (voiceStatus) {
-      voiceStatus.textContent = "Voice recognition isn't supported in this browser. Try Chrome on desktop.";
-    }
-    return;
-  }
-
-  if (window.speechSynthesis && window.speechSynthesis.speaking) {
-    window.speechSynthesis.cancel();
-    setVoiceVisualState("idle");
-    return;
-  }
-
-  if (!recognition) {
-    recognition = new SpeechRecognition();
-    recognition.lang = state.settings.language === "hi" ? "hi-IN" : state.settings.language === "bn" ? "bn-IN" : "en-US";
-    recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setVoiceVisualState("listening");
-    };
-
-    recognition.onresult = async (event) => {
-      const transcript = event.results[0][0].transcript;
-      if (voiceStatus) voiceStatus.textContent = `You: ${transcript}`;
-      
-      setVoiceVisualState("thinking");
-      saveChatMessage("user", transcript);
-
-      try {
-        const response = await askVoiceAI(transcript);
-        if (voiceStatus) voiceStatus.textContent = response;
-        
-        saveChatMessage("ai", response);
-        speakResponse(response);
-      } catch (err) {
-        const fallback = buildFallbackResponse(transcript);
-        const cleanFallback = cleanTextForSpeech(fallback);
-        if (voiceStatus) voiceStatus.textContent = cleanFallback;
-        speakResponse(cleanFallback);
-      }
-    };
-
-    recognition.onerror = () => {
-      setVoiceVisualState("idle");
-    };
-
-    recognition.onend = () => {
-      if (window.speechSynthesis && !window.speechSynthesis.speaking) {
-        setVoiceVisualState("idle");
-      }
-    };
-  }
-
-  if (isListening) {
-    recognition.stop();
-  } else {
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
-    recognition.start();
-  }
-}
-
-function setVoiceVisualState(mode) {
-  isListening = (mode === "listening");
-  
-  if (!voiceOrb || !voiceToggle || !voiceStatus) return;
-
-  voiceOrb.classList.remove("listening", "thinking", "speaking");
-  
-  if (mode === "listening") {
-    voiceOrb.classList.add("listening");
-    voiceToggle.textContent = "Stop Listening";
-    voiceStatus.textContent = "Listening to you...";
-  } else if (mode === "thinking") {
-    voiceOrb.classList.add("thinking");
-    voiceToggle.textContent = "Cancel";
-    voiceStatus.textContent = "NOVA is processing...";
-  } else if (mode === "speaking") {
-    voiceOrb.classList.add("speaking");
-    voiceToggle.textContent = "Mute / Stop";
-    voiceStatus.textContent = "NOVA is speaking...";
-  } else {
-    voiceToggle.textContent = "Start Voice Mode";
-    voiceStatus.textContent = "Click start to talk with NOVA.";
-  }
-}
-
-function speakResponse(text) {
-  if (!window.speechSynthesis) return;
-
-  window.speechSynthesis.cancel();
-
-  const cleanedText = cleanTextForSpeech(text);
-  const utterance = new SpeechSynthesisUtterance(cleanedText);
-  
-  utterance.rate = 1.0;
-  utterance.pitch = 1.0;
-  utterance.volume = 1.0;
-
-  const voices = window.speechSynthesis.getVoices();
-  const premiumVoice = voices.find(v => 
-    (v.name.includes("Google") || v.name.includes("Natural")) && v.lang.startsWith("en")
-  ) || voices.find(v => v.lang.startsWith("en"));
-
-  if (premiumVoice) {
-    utterance.voice = premiumVoice;
-  }
-
-  utterance.onstart = () => {
-    setVoiceVisualState("speaking");
-  };
-
-  utterance.onend = () => {
-    setVoiceVisualState("idle");
-  };
-
-  utterance.onerror = () => {
-    setVoiceVisualState("idle");
-  };
-
-  window.speechSynthesis.speak(utterance);
-}
-
-if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
 // ─── Command Palette ─────────────────────────────────────────────────────────
@@ -1628,7 +1312,7 @@ async function generateImage() {
 
 function createPlaceholderImage(prompt) {
   const svg = `
-    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="768" height="512" viewBox="0 0 768 512">
+    <svg xmlns="http://www.w3.org/2000/svg" width="768" height="512" viewBox="0 0 768 512">
       <defs>
         <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
           <stop stop-color="#6C63FF"/>
@@ -1639,13 +1323,11 @@ function createPlaceholderImage(prompt) {
       <rect x="36" y="36" width="696" height="440" rx="24" fill="url(#bg)" opacity="0.22"/>
       <text x="54" y="96" fill="#FFFFFF" font-family="Arial" font-size="34" font-weight="700">NOVA AI Image Brief</text>
       <foreignObject x="54" y="130" width="660" height="280">
-        <div xmlns="[http://www.w3.org/1999/xhtml](http://www.w3.org/1999/xhtml)" style="color:white;font-family:Arial;font-size:22px;line-height:1.45">${escapeHtml(prompt)}</div>
+        <div xmlns="http://www.w3.org/1999/xhtml" style="color:white;font-family:Arial;font-size:22px;line-height:1.45">${escapeHtml(prompt)}</div>
       </foreignObject>
     </svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
-
-// ─── Ambient Effects ──────────────────────────────────────────────────────────
 
 function renderImages() {
   const gallery = document.getElementById("imageGallery");
@@ -1744,7 +1426,7 @@ async function loadQuote() {
   const quoteAuthor = document.getElementById("quoteAuthor");
 
   try {
-    const response = await fetch("[https://api.quotable.io/random](https://api.quotable.io/random)");
+    const response = await fetch("https://api.quotable.io/random");
     if (!response.ok) throw new Error("Quote request failed");
     const data = await response.json();
     if (quoteText) quoteText.textContent = `"${data.content}"`;
