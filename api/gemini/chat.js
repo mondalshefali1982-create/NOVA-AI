@@ -57,11 +57,11 @@ async function saveMemoryIfRelevant(message, userId) {
 
       if (!existing) {
         await Memory.create({
-  userId,
-  content,
-  category: pattern.category,
-  importance: pattern.importance
-});
+          userId,
+          content,
+          category: pattern.category,
+          importance: pattern.importance
+        });
 
         console.log("MEMORY SAVED:", content);
       }
@@ -82,16 +82,20 @@ module.exports = async function handler(req, res) {
   try {
     await connectDB();
 
-    const { message = "", history = [] } = getBody(req);
+    const {
+      message = "",
+      history = [],
+      systemInstruction
+    } = getBody(req);
     let userId = null;
 
-try {
-  const decoded = verifyToken(req);
-  console.log("JWT DECODED:", decoded);
-  userId = decoded.userId;
-} catch (error) {
-  console.log("No valid user token found");
-}
+    try {
+      const decoded = verifyToken(req);
+      console.log("JWT DECODED:", decoded);
+      userId = decoded.userId;
+    } catch (error) {
+      console.log("No valid user token found");
+    }
 
     if (!message.trim()) {
       return res.status(400).json({
@@ -113,22 +117,22 @@ try {
     let memoryContext = "No memories stored.";
 
     try {
-  const memories = userId
-    ? await Memory.find({ userId })
-        .sort({ createdAt: -1 })
-        .limit(20)
-    : [];
+      const memories = userId
+        ? await Memory.find({ userId })
+            .sort({ createdAt: -1 })
+            .limit(20)
+        : [];
 
-  console.log("MEMORIES FOUND:", memories.length);
+      console.log("MEMORIES FOUND:", memories.length);
 
-  if (memories.length > 0) {
-    memoryContext = memories
-      .map((m) => `- ${m.content}`)
-      .join("\n");
-  }
-} catch (memoryError) {
-  console.error("Memory load error:", memoryError);
-}
+      if (memories.length > 0) {
+        memoryContext = memories
+          .map((m) => `- ${m.content}`)
+          .join("\n");
+      }
+    } catch (memoryError) {
+      console.error("Memory load error:", memoryError);
+    }
 
     const prompt = `
 USER MEMORIES:
@@ -146,6 +150,7 @@ ${message}
 
     const text = await callGemini(prompt, {
       systemInstruction:
+        systemInstruction ||
         "You are NOVA AI, a premium AI productivity assistant with memory. Use stored memories when relevant. Give practical, polished, helpful answers and remember important information provided by the user.",
       maxOutputTokens: 900
     });
