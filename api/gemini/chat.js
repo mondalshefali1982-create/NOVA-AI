@@ -10,6 +10,67 @@ const {
 const Memory = require("../_models/Memory");
 const connectDB = require("../_utils/db");
 
+async function saveMemoryIfRelevant(message) {
+  const patterns = [
+    {
+      regex: /my name is (.+)/i,
+      category: "personal",
+      importance: "high",
+      formatter: (match) => `User name is ${match[1].trim()}`
+    },
+    {
+      regex: /i am building (.+)/i,
+      category: "project",
+      importance: "high",
+      formatter: (match) => `User is building ${match[1].trim()}`
+    },
+    {
+      regex: /my goal is (.+)/i,
+      category: "goal",
+      importance: "high",
+      formatter: (match) => `User goal is ${match[1].trim()}`
+    },
+    {
+      regex: /i am a (.+)/i,
+      category: "career",
+      importance: "medium",
+      formatter: (match) => `User is a ${match[1].trim()}`
+    },
+    {
+      regex: /i work as (.+)/i,
+      category: "career",
+      importance: "medium",
+      formatter: (match) => `User works as ${match[1].trim()}`
+    }
+  ];
+
+  try {
+    for (const pattern of patterns) {
+      const match = message.match(pattern.regex);
+
+      if (!match) continue;
+
+      const content = pattern.formatter(match);
+
+      const existing = await Memory.findOne({ content });
+
+      if (!existing) {
+        await Memory.create({
+          content,
+          category: pattern.category,
+          importance: pattern.importance
+        });
+
+        console.log("MEMORY SAVED:", content);
+      }
+
+      break;
+    }
+  } catch (error) {
+    console.error("Memory save error:", error);
+  }
+}
+
 module.exports = async function handler(req, res) {
   setCors(res);
 
@@ -27,6 +88,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // Auto-save memories
+    await saveMemoryIfRelevant(message);
+
     const context = history
       .slice(-8)
       .map(
@@ -35,15 +99,14 @@ module.exports = async function handler(req, res) {
       )
       .join("\n");
 
-    // Load memories
     let memoryContext = "No memories stored.";
 
     try {
       const memories = await Memory.find({})
-  .sort({ createdAt: -1 })
-  .limit(10);
+        .sort({ createdAt: -1 })
+        .limit(20);
 
-console.log("MEMORIES FOUND:", JSON.stringify(memories));
+      console.log("MEMORIES FOUND:", memories.length);
 
       if (memories.length > 0) {
         memoryContext = memories
@@ -67,11 +130,10 @@ CURRENT USER REQUEST:
 
 ${message}
 `;
-console.log("PROMPT SENT TO GEMINI:");
-console.log(prompt);
+
     const text = await callGemini(prompt, {
       systemInstruction:
-        "You are NOVA AI, a premium AI productivity assistant with memory. Use stored memories when relevant. Give practical, polished, and helpful answers.",
+        "You are NOVA AI, a premium AI productivity assistant with memory. Use stored memories when relevant. Give practical, polished, helpful answers and remember important information provided by the user.",
       maxOutputTokens: 900
     });
 
