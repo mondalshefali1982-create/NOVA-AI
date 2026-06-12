@@ -80,7 +80,6 @@ const commandResults = document.getElementById("commandResults");
 const voiceStatus = document.getElementById("voiceStatus");
 const voiceToggle = document.getElementById("voiceToggle");
 const voiceOrb = document.getElementById("voiceOrb");
-const voiceResponse = document.getElementById("voiceResponse");
 const authForm = document.getElementById("authForm");
 const authFields = document.getElementById("authFields");
 const authDisplayName = document.getElementById("authDisplayName");
@@ -447,58 +446,39 @@ function clearAuthSession() {
   setGreeting();
 }
 
+function updateAuthUI() {
+  const isLoggedIn = Boolean(state.authToken && state.currentUser);
+
+  authForm?.classList.toggle("is-authenticated", isLoggedIn);
+  if (authFields) authFields.hidden = isLoggedIn;
+  if (loginBtn) loginBtn.hidden = isLoggedIn;
+  if (signupBtn) signupBtn.hidden = isLoggedIn;
+  if (logoutBtn) logoutBtn.hidden = !isLoggedIn;
+  if (authModeLabel) authModeLabel.textContent = isLoggedIn ? "Cloud" : "Guest";
+
+  if (isLoggedIn) {
+    if (authDisplayName) authDisplayName.value = state.currentUser?.name || "";
+    if (authEmail) authEmail.value = state.currentUser?.email || "";
+  }
+}
+
+function setAuthStatus(message) {
+  if (authStatus) authStatus.textContent = message;
+}
+
+function setAuthButtonsBusy(isBusy) {
+  [loginBtn, signupBtn, logoutBtn].forEach((button) => {
+    if (button) button.disabled = isBusy;
+  });
+}
+
 // ─── Command Palette ─────────────────────────────────────────────────────────
 
-const commands = [
-  { label: "Open AI Chat", panel: "ai-chat" },
-  { label: "Open Voice Mode", panel: "voice-mode" },
-  { label: "Open AI Studio", panel: "studio" },
-  { label: "Open Planner", panel: "planner" },
-  { label: "Open Tasks", panel: "tasks" },
-  { label: "Open Cloud Sync", panel: "cloud" },
-  { label: "Open Settings", panel: "settings" },
-  { label: "Start New Chat", action: startNewChat }
-];
+commandPalette?.addEventListener("click", (event) => {
+  if (event.target === commandPalette) closeCommandPalette();
+});
 
-function openCommandPalette() {
-  commandPalette?.classList.add("open");
-  commandPalette?.setAttribute("aria-hidden", "false");
-  if (commandInput) commandInput.value = "";
-  renderCommands();
-  commandInput?.focus();
-}
-
-function closeCommandPalette() {
-  commandPalette?.classList.remove("open");
-  commandPalette?.setAttribute("aria-hidden", "true");
-}
-
-function renderCommands() {
-  if (!commandResults) return;
-  const query = commandInput?.value.toLowerCase() || "";
-  commandResults.innerHTML = "";
-
-  const fragment = document.createDocumentFragment();
-
-  commands
-    .filter((cmd) => cmd.label.toLowerCase().includes(query))
-    .forEach((cmd) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = cmd.label;
-      button.addEventListener("click", () => {
-        if (cmd.panel) {
-          window.location.hash = cmd.panel;
-          activatePanel(cmd.panel);
-        }
-        if (cmd.action) cmd.action();
-        closeCommandPalette();
-      });
-      fragment.appendChild(button);
-    });
-
-  commandResults.appendChild(fragment);
-}
+commandInput?.addEventListener("input", renderCommands);
 
 // ─── Panel Management ─────────────────────────────────────────────────────────
 
@@ -529,7 +509,11 @@ function setSidebarState(isOpen) {
   );
 }
 
-// ─── Conversation Management Handlers ──────────────────────────────────────────
+function closeSidebar() {
+  setSidebarState(false);
+}
+
+// ─── Chat & Conversations ─────────────────────────────────────────────────────
 
 function restoreChat() {
   migrateSingleChatHistory();
@@ -571,7 +555,6 @@ async function callNovaBackend(route, payload) {
 
   return response.json();
 }
-
 async function callNovaAuth(route, options = {}) {
   const headers = {
     "Content-Type": "application/json",
@@ -780,8 +763,9 @@ async function streamMessage(element, text) {
   element.classList.add("nova-formatted", "streaming");
 
   const totalChars = text.length;
+  // Maximum throughput configuration speeds up render processing across layout frameworks
   const chunkSize = totalChars > 1200 ? 45 : totalChars > 600 ? 30 : totalChars > 200 ? 16 : 8;
-  const frameDelay = 4;
+  const frameDelay = 4; // Blazing fast step iteration delay loop
 
   let index = 0;
   let buffer = "";
@@ -792,6 +776,7 @@ async function streamMessage(element, text) {
       buffer += text.slice(index, index + chunkSize);
       index += chunkSize;
 
+      // Downscaled parsing during dynamic stream minimizes processing load per iteration tick
       const hasStructuralMarkdown = buffer.includes("```") || buffer.includes("- ") || buffer.includes("1. ");
       element.innerHTML = hasStructuralMarkdown ? parseMarkdown(buffer) : parseSimpleText(buffer);
 
@@ -803,6 +788,7 @@ async function streamMessage(element, text) {
       }
       setTimeout(() => requestAnimationFrame(renderFrame), frameDelay);
     } else {
+      // Final comprehensive syntax verification structure pass
       element.innerHTML = parseMarkdown(text);
       element.classList.remove("streaming");
 
@@ -829,215 +815,461 @@ async function streamMessage(element, text) {
   });
 }
 
-// ─── Upgraded Conversational Voice Mode ────────────────────────────────────────
+// ─── Conversation Management ──────────────────────────────────────────────────
 
-function cleanTextForSpeech(text) {
-  if (!text) return "";
-  
-  let clean = text;
-  
-  // 1. Completely omit complex technical multi-line structural fences
-  clean = clean.replace(/```[\s\S]*?```/g, " [code block omitted] ");
-  
-  // 2. Clear horizontal rules and decorative dividers
-  clean = clean.replace(/^---+$/gm, "");
-  
-  // 3. Clean up Markdown links, converting [Display Text](url) to just "Display Text"
-  clean = clean.replace(/\[(.*?)\]\((.*?)\)/g, "$1");
-  
-  // 4. Strip structurally placed list bullets or markdown check indicators at start of lines
-  clean = clean.replace(/^[•\-*+]\s+/gm, ""); 
-  
-  // 5. Strip common text wrapper symbols (bold, italic, inline-code)
-  clean = clean.replace(/\*\*\*([^\*]+)\*\*\*/g, "$1");
-  clean = clean.replace(/\*\*([^\*]+)\*\*/g, "$1");
-  clean = clean.replace(/\*([^\*]+)\*/g, "$1");
-  clean = clean.replace(/`([^`]+)`/g, "$1");
-  clean = clean.replace(/__([^_]+)__/g, "$1");
-  clean = clean.replace(/_([^_]+)_/g, "$1");
-  
-  // 6. Contextually clear structural characters (like headings or blockquotes) 
-  // while safely ignoring hyphens or underscores tucked between word characters (\b)
-  clean = clean.replace(/(?:\s|^)[#*>+]+(?:\s|$)/g, " ");
-  
-  // 7. Clean up loose stray symbols that aren't parts of words
-  clean = clean.replace(/\s[#*>+]/g, " ");
-  
-  // 8. Condense multiple spaces and line-breaks down into standard spaces for smooth pacing
-  clean = clean.replace(/\n+/g, " ");
-  clean = clean.replace(/\s+/g, " ");
-  
-  return clean.trim();
+function saveChatMessage(type, text) {
+  const conversation = getActiveConversation() || createConversation("New chat");
+  conversation.messages.push({ type, text, createdAt: Date.now() });
+  conversation.updatedAt = Date.now();
+
+  if (type === "user" && conversation.title === "New chat") {
+    conversation.title = buildConversationTitle(text);
+  }
+
+  persistConversations();
+  renderConversationList();
 }
 
-async function askVoiceAI(message) {
-  const userName = state.currentUser?.name || "User";
-  const voiceSystemInstruction = `You are NOVA Voice Assistant. Speak naturally like a real human assistant. Rules: Never use markdown. Never use bullet points. Never use headings. Never use code blocks. Never use separators like ---. Never use hashtags. Never use asterisks. Never mention formatting. Use short conversational sentences. Sound friendly, intelligent, and professional. Keep answers concise and easy to listen to. Address the user naturally when appropriate.`;
+function startNewChat() {
+  createConversation("New chat");
+  state.lastUserPrompt = "";
+  renderActiveConversation();
+  renderConversationList();
+}
 
-  const response = await callNovaBackend(NOVA_API_ROUTES.chat, {
-    message,
-    systemInstruction: voiceSystemInstruction,
-    history: getActiveConversation()?.messages.slice(-8) || []
+function getActiveConversation() {
+  return state.conversations.find((c) => c.id === state.activeConversationId);
+}
+
+function createConversation(title) {
+  const conversation = {
+    id: crypto.randomUUID(),
+    title,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    messages: [
+      {
+        type: "ai",
+        text: "Hello! I'm NOVA. What would you like to create, plan, or explore today?",
+        createdAt: Date.now()
+      }
+    ]
+  };
+
+  state.conversations.unshift(conversation);
+  state.activeConversationId = conversation.id;
+  persistConversations();
+  return conversation;
+}
+
+function renderActiveConversation() {
+  const chatFragment = document.createDocumentFragment();
+  const overviewFragment = document.createDocumentFragment();
+
+  if (chatMessages) chatMessages.innerHTML = "";
+  if (overviewMessages) overviewMessages.innerHTML = "";
+
+  const conversation = getActiveConversation();
+  if (!conversation) return;
+
+  conversation.messages.slice(-14).forEach((msg) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = `message-wrapper ${msg.type}`;
+    const bubble = document.createElement("div");
+    bubble.className = `message ${msg.type}`;
+
+    if (msg.type === "ai" && msg.text) {
+      bubble.innerHTML = parseMarkdown(msg.text);
+      bubble.classList.add("nova-formatted");
+      wrapper.appendChild(bubble);
+      wrapper.appendChild(buildMessageActions(msg.text));
+    } else {
+      bubble.textContent = msg.text;
+      wrapper.appendChild(bubble);
+    }
+    chatFragment.appendChild(wrapper);
   });
-  return response.text;
+
+  conversation.messages.slice(-2).forEach((msg) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = `message-wrapper ${msg.type}`;
+    const bubble = document.createElement("div");
+    bubble.className = `message ${msg.type}`;
+
+    if (msg.type === "ai" && msg.text) {
+      bubble.innerHTML = parseMarkdown(msg.text);
+      bubble.classList.add("nova-formatted");
+      wrapper.appendChild(bubble);
+    } else {
+      bubble.textContent = msg.text;
+      wrapper.appendChild(bubble);
+    }
+    overviewFragment.appendChild(wrapper);
+  });
+
+  if (chatMessages) {
+    chatMessages.appendChild(chatFragment);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+  if (overviewMessages) {
+    overviewMessages.appendChild(overviewFragment);
+    overviewMessages.scrollTop = overviewMessages.scrollHeight;
+  }
 }
+
+function renderConversationList() {
+  if (!conversationList) return;
+  conversationList.innerHTML = "";
+
+  if (!state.conversations.length) {
+    conversationList.innerHTML =
+      '<div class="conversation-empty">No saved chats yet.</div>';
+    return;
+  }
+
+  const listFragment = document.createDocumentFragment();
+
+  state.conversations.forEach((conversation) => {
+    const item = document.createElement("article");
+    item.className = `conversation-item ${
+      conversation.id === state.activeConversationId ? "active" : ""
+    }`;
+    item.innerHTML = `
+      <button class="conversation-open" type="button">
+        <strong>${escapeHtml(conversation.title)}</strong>
+        <span>${formatConversationTime(conversation.updatedAt)}</span>
+      </button>
+      <button class="conversation-delete" type="button" aria-label="Delete ${escapeHtml(
+        conversation.title
+      )}">Delete</button>
+    `;
+
+    item.querySelector(".conversation-open").addEventListener("click", () => {
+      state.activeConversationId = conversation.id;
+      localStorage.setItem("novaActiveConversationId", state.activeConversationId);
+      renderActiveConversation();
+      renderConversationList();
+    });
+
+    item.querySelector(".conversation-delete").addEventListener("click", () => {
+      deleteConversation(conversation.id);
+    });
+
+    listFragment.appendChild(item);
+  });
+
+  conversationList.appendChild(listFragment);
+}
+
+function deleteConversation(id) {
+  state.conversations = state.conversations.filter((c) => c.id !== id);
+  if (state.activeConversationId === id) {
+    state.activeConversationId = state.conversations[0]?.id || "";
+  }
+  if (!state.activeConversationId) createConversation("New chat");
+  persistConversations();
+  deleteCloudConversation(id);
+  renderActiveConversation();
+  renderConversationList();
+}
+
+function clearAllChats() {
+  const deletedIds = state.conversations.map((conversation) => conversation.id);
+  state.conversations = [];
+  state.activeConversationId = "";
+  createConversation("New chat");
+  deletedIds.forEach(deleteCloudConversation);
+  renderActiveConversation();
+  renderConversationList();
+}
+
+function persistConversations(options = {}) {
+  state.conversations = state.conversations
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, 20);
+  store.set("novaConversations", state.conversations);
+  localStorage.setItem("novaActiveConversationId", state.activeConversationId);
+  if (options.sync !== false) scheduleCloudConversationSync();
+}
+
+async function loadCloudConversations() {
+  if (!state.authToken) return;
+
+  const data = await callNovaAuth(NOVA_API_ROUTES.sync, { method: "GET" });
+  const cloudConversations = Array.isArray(data.conversations) ? data.conversations : [];
+  mergeCloudAndLocalConversations(cloudConversations);
+  await syncAllConversationsToCloud();
+}
+
+function mergeCloudAndLocalConversations(cloudConversations = []) {
+  const merged = new Map();
+
+  [...cloudConversations, ...state.conversations].forEach((conversation) => {
+    const normalized = normalizeConversation(conversation);
+    if (!normalized?.id) return;
+
+    const existing = merged.get(normalized.id);
+    if (!existing || Number(normalized.updatedAt || 0) >= Number(existing.updatedAt || 0)) {
+      merged.set(normalized.id, normalized);
+    }
+  });
+
+  state.conversations = [...merged.values()]
+    .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))
+    .slice(0, 20);
+
+  if (!state.activeConversationId || !getActiveConversation()) {
+    state.activeConversationId = state.conversations[0]?.id || "";
+  }
+
+  if (!state.activeConversationId) {
+    createConversation("New chat");
+    return;
+  }
+
+  persistConversations({ sync: false });
+  renderActiveConversation();
+  renderConversationList();
+}
+
+function normalizeConversation(conversation) {
+  if (!conversation || typeof conversation !== "object") return null;
+  const now = Date.now();
+  return {
+    id: conversation.id || crypto.randomUUID(),
+    title: conversation.title || "New chat",
+    createdAt: Number(conversation.createdAt || now),
+    updatedAt: Number(conversation.updatedAt || conversation.createdAt || now),
+    messages: Array.isArray(conversation.messages)
+      ? conversation.messages
+          .filter((message) => message && message.type && typeof message.text === "string")
+          .map((message) => ({
+            type: message.type === "user" ? "user" : "ai",
+            text: message.text,
+            createdAt: Number(message.createdAt || now)
+          }))
+      : []
+  };
+}
+
+function scheduleCloudConversationSync() {
+  if (!state.authToken || state.isSyncingConversations) return;
+  clearTimeout(state.syncTimer);
+  state.syncTimer = window.setTimeout(syncAllConversationsToCloud, 900);
+}
+
+async function syncAllConversationsToCloud() {
+  if (!state.authToken || state.isSyncingConversations) return;
+
+  state.isSyncingConversations = true;
+
+  try {
+    for (const conversation of state.conversations) {
+      await callNovaAuth(NOVA_API_ROUTES.sync, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "upsert",
+          conversation: normalizeConversation(conversation)
+        })
+      });
+    }
+  } catch (error) {
+    setAuthStatus(`Cloud sync paused: ${error.message}`);
+  } finally {
+    state.isSyncingConversations = false;
+  }
+}
+
+async function deleteCloudConversation(id) {
+  if (!state.authToken || !id) return;
+
+  try {
+    await callNovaAuth(NOVA_API_ROUTES.sync, {
+      method: "POST",
+      body: JSON.stringify({ action: "delete", id })
+    });
+  } catch (error) {
+    setAuthStatus(`Cloud delete paused: ${error.message}`);
+  }
+}
+
+function migrateSingleChatHistory() {
+  const oldHistory = store.get("novaChatHistory", []);
+  if (!oldHistory.length || state.conversations.length) return;
+
+  state.conversations = [
+    {
+      id: crypto.randomUUID(),
+      title: "Previous NOVA chat",
+      createdAt: oldHistory[0]?.createdAt || Date.now(),
+      updatedAt: oldHistory.at(-1)?.createdAt || Date.now(),
+      messages: oldHistory
+    }
+  ];
+  state.activeConversationId = state.conversations[0].id;
+  persistConversations();
+  localStorage.removeItem("novaChatHistory");
+}
+
+function buildConversationTitle(text) {
+  return text.length > 42 ? `${text.slice(0, 42)}…` : text;
+}
+
+function formatConversationTime(timestamp) {
+  const minutes = Math.max(1, Math.round((Date.now() - timestamp) / 60_000));
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.round(hours / 24)}d`;
+}
+
+// ─── Typing Indicator ─────────────────────────────────────────────────────────
+
+function addTypingMessage(container) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-wrapper ai";
+
+  const bubble = document.createElement("div");
+  bubble.className = "message ai typing-bubble";
+  bubble.innerHTML = `
+    <span class="typing">
+      <span></span>
+      <span></span>
+      <span></span>
+    </span>`;
+
+  wrapper.appendChild(bubble);
+  container.appendChild(wrapper);
+  container.scrollTop = container.scrollHeight;
+  return wrapper;
+}
+
+function trimMessages(container) {
+  while (container.children.length > 40) {
+    container.removeChild(container.firstElementChild);
+  }
+}
+
+// ─── Voice Mode ───────────────────────────────────────────────────────────────
 
 function toggleVoiceMode() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
     if (voiceStatus) {
-      voiceStatus.textContent = "Voice recognition isn't supported in this browser. Try Chrome on desktop.";
+      voiceStatus.textContent =
+        "Voice recognition isn't supported in this browser. Try Chrome on desktop or Android.";
     }
     return;
   }
 
-  if (window.speechSynthesis && window.speechSynthesis.speaking) {
-    window.speechSynthesis.cancel();
-    setVoiceVisualState("idle");
-    return;
-  }
-
-  // Ensure a persistent container element with id="voiceResponse" exists inside the layout safely
-  let dynamicResponseTarget = document.getElementById("voiceResponse");
-  if (!dynamicResponseTarget) {
-    const voicePanel = document.getElementById("voice-mode") || document.querySelector(".voice-interface-container") || document.body;
-    dynamicResponseTarget = document.createElement("div");
-    dynamicResponseTarget.id = "voiceResponse";
-    dynamicResponseTarget.className = "voice-response";
-    voicePanel.appendChild(dynamicResponseTarget);
-  }
-
   if (!recognition) {
     recognition = new SpeechRecognition();
-    recognition.lang = state.settings.language === "hi" ? "hi-IN" : state.settings.language === "bn" ? "bn-IN" : "en-US";
+    recognition.lang =
+      state.settings.language === "hi"
+        ? "hi-IN"
+        : state.settings.language === "bn"
+        ? "bn-IN"
+        : "en-US";
     recognition.interimResults = false;
-
-    recognition.onstart = () => {
-      setVoiceVisualState("listening");
-    };
 
     recognition.onresult = async (event) => {
       const transcript = event.results[0][0].transcript;
-      if (voiceStatus) voiceStatus.textContent = `You: ${transcript}`;
-      
-      setVoiceVisualState("thinking");
+      if (voiceStatus) voiceStatus.textContent = `You said: ${transcript}`;
+      const response = await askFreeAI(transcript).catch(() =>
+        buildFallbackResponse(transcript)
+      );
+      if (voiceStatus) voiceStatus.textContent = response;
+      speakResponse(response);
       saveChatMessage("user", transcript);
-
-      try {
-        const response = await askVoiceAI(transcript);
-        
-        // Display full response inside the container card instantly, using high-speed markdown streaming
-        if (dynamicResponseTarget) {
-          await streamMessage(dynamicResponseTarget, response);
-        } else if (voiceStatus) {
-          voiceStatus.textContent = response;
-        }
-        
-        saveChatMessage("ai", response);
-        speakResponse(response);
-      } catch (err) {
-        const fallback = buildFallbackResponse(transcript);
-        const cleanFallback = cleanTextForSpeech(fallback);
-        if (dynamicResponseTarget) {
-          renderFormattedText(dynamicResponseTarget, fallback);
-        } else if (voiceStatus) {
-          voiceStatus.textContent = cleanFallback;
-        }
-        speakResponse(cleanFallback);
-      }
+      saveChatMessage("ai", response);
     };
 
-    recognition.onerror = () => {
-      setVoiceVisualState("idle");
-    };
-
-    recognition.onend = () => {
-      if (window.speechSynthesis && !window.speechSynthesis.speaking) {
-        setVoiceVisualState("idle");
-      }
-    };
+    recognition.onend = () => setVoiceState(false);
   }
 
   if (isListening) {
     recognition.stop();
+    setVoiceState(false);
   } else {
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
-    // Flush container canvas to clear prior frames when starting a fresh microphone cycle
-    if (dynamicResponseTarget) dynamicResponseTarget.innerHTML = "";
     recognition.start();
+    setVoiceState(true);
   }
 }
 
-function setVoiceVisualState(mode) {
-  isListening = (mode === "listening");
-  
-  if (!voiceOrb || !voiceToggle || !voiceStatus) return;
-
-  voiceOrb.classList.remove("listening", "thinking", "speaking");
-  
-  if (mode === "listening") {
-    voiceOrb.classList.add("listening");
-    voiceToggle.textContent = "Stop Listening";
-    voiceStatus.textContent = "Listening to you...";
-  } else if (mode === "thinking") {
-    voiceOrb.classList.add("thinking");
-    voiceToggle.textContent = "Cancel";
-    voiceStatus.textContent = "NOVA is processing...";
-  } else if (mode === "speaking") {
-    voiceOrb.classList.add("speaking");
-    voiceToggle.textContent = "Mute / Stop";
-    voiceStatus.textContent = "NOVA is speaking...";
-  } else {
-    voiceToggle.textContent = "Start Voice Mode";
-    voiceStatus.textContent = "Click start to talk with NOVA.";
-  }
+function setVoiceState(active) {
+  isListening = active;
+  voiceOrb?.classList.toggle("listening", active);
+  if (voiceToggle) voiceToggle.textContent = active ? "Stop Listening" : "Start Listening";
+  if (active && voiceStatus) voiceStatus.textContent = "Listening…";
 }
 
 function speakResponse(text) {
   if (!window.speechSynthesis) return;
-
   window.speechSynthesis.cancel();
-
-  const cleanedText = cleanTextForSpeech(text);
-  const utterance = new SpeechSynthesisUtterance(cleanedText);
-  
-  utterance.rate = 1.0;
-  utterance.pitch = 1.0;
-  utterance.volume = 1.0;
-
-  const voices = window.speechSynthesis.getVoices();
-  const premiumVoice = voices.find(v => 
-    (v.name.includes("Google") || v.name.includes("Natural")) && v.lang.startsWith("en")
-  ) || voices.find(v => v.lang.startsWith("en"));
-
-  if (premiumVoice) {
-    utterance.voice = premiumVoice;
-  }
-
-  utterance.onstart = () => {
-    setVoiceVisualState("speaking");
-  };
-
-  utterance.onend = () => {
-    setVoiceVisualState("idle");
-  };
-
-  utterance.onerror = () => {
-    setVoiceVisualState("idle");
-  };
-
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1;
+  utterance.pitch = 1.05;
   window.speechSynthesis.speak(utterance);
 }
 
-if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+// ─── Command Palette ─────────────────────────────────────────────────────────
+
+const commands = [
+  { label: "Open AI Chat", panel: "ai-chat" },
+  { label: "Open Voice Mode", panel: "voice-mode" },
+  { label: "Open AI Studio", panel: "studio" },
+  { label: "Open Planner", panel: "planner" },
+  { label: "Open Tasks", panel: "tasks" },
+  { label: "Open Cloud Sync", panel: "cloud" },
+  { label: "Open Settings", panel: "settings" },
+  { label: "Start New Chat", action: startNewChat }
+];
+
+function openCommandPalette() {
+  commandPalette?.classList.add("open");
+  commandPalette?.setAttribute("aria-hidden", "false");
+  if (commandInput) commandInput.value = "";
+  renderCommands();
+  commandInput?.focus();
+}
+
+function closeCommandPalette() {
+  commandPalette?.classList.remove("open");
+  commandPalette?.setAttribute("aria-hidden", "true");
+}
+
+function renderCommands() {
+  if (!commandResults) return;
+  const query = commandInput?.value.toLowerCase() || "";
+  commandResults.innerHTML = "";
+
+  const fragment = document.createDocumentFragment();
+
+  commands
+    .filter((cmd) => cmd.label.toLowerCase().includes(query))
+    .forEach((cmd) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = cmd.label;
+      button.addEventListener("click", () => {
+        if (cmd.panel) {
+          window.location.hash = cmd.panel;
+          activatePanel(cmd.panel);
+        }
+        if (cmd.action) cmd.action();
+        closeCommandPalette();
+      });
+      fragment.appendChild(button);
+    });
+
+  commandResults.appendChild(fragment);
 }
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
 function renderTasks() {
-  if (!taskList) return;
   taskList.innerHTML = "";
   if (!state.tasks.length) {
     taskList.innerHTML =
@@ -1072,7 +1304,6 @@ function renderTasks() {
 // ─── Saved Prompts ────────────────────────────────────────────────────────────
 
 function renderPrompts() {
-  if (!promptList) return;
   promptList.innerHTML = "";
   if (!state.prompts.length) {
     promptList.innerHTML = '<div class="prompt-item"><span>No saved prompts yet.</span></div>';
@@ -1179,7 +1410,7 @@ function setGreeting() {
   if (hour < 12) greeting = "Good Morning";
   else if (hour < 17) greeting = "Good Afternoon";
 
-  const name = state.currentUser?.name || "User";
+  const name = state.currentUser?.name || "Rohan";
   if (greetingTitle) greetingTitle.textContent = `${greeting}, ${name}`;
   if (greetingSubtitle) {
     greetingSubtitle.textContent =
@@ -1280,7 +1511,7 @@ function createPlaceholderImage(prompt) {
   const svg = `
     <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="768" height="512" viewBox="0 0 768 512">
       <defs>
-        <linearGradient id="bg" x1="0" x2="1" y1="0" x2="1">
+        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
           <stop stop-color="#6C63FF"/>
           <stop offset="1" stop-color="#00D4FF"/>
         </linearGradient>
@@ -1415,6 +1646,8 @@ function escapeHtml(value) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])
   );
 }
+
+// ─── Ambient Effects ──────────────────────────────────────────────────────────
 
 function addCursorGlow() {
   if (window.matchMedia("(pointer: coarse)").matches) return;
