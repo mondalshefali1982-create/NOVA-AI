@@ -533,19 +533,28 @@ async function askFreeAI(message) {
 }
 
 async function callNovaBackend(route, payload) {
+  const headers = {
+    "Content-Type": "application/json"
+  };
+
+  if (state.authToken) {
+    headers.Authorization = `Bearer ${state.authToken}`;
+  }
+
   const response = await fetch(`${NOVA_BACKEND_BASE_URL}${route}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
-    throw new Error("The AI service is temporarily unavailable. Please try again shortly.");
+    throw new Error(
+      "The AI service is temporarily unavailable. Please try again shortly."
+    );
   }
 
   return response.json();
 }
-
 async function callNovaAuth(route, options = {}) {
   const headers = {
     "Content-Type": "application/json",
