@@ -87,6 +87,7 @@ module.exports = async function handler(req, res) {
 
 try {
   const decoded = verifyToken(req);
+  console.log("JWT DECODED:", decoded);
   userId = decoded.userId;
 } catch (error) {
   console.log("No valid user token found");
