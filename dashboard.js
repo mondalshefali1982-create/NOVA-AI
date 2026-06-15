@@ -525,11 +525,17 @@ function restoreChat() {
 }
 
 async function askFreeAI(message) {
-  const response = await callNovaBackend(NOVA_API_ROUTES.chat, {
-    message,
-    history: getActiveConversation()?.messages.slice(-8) || []
-  });
-  return response.text;
+  const response = await callNovaBackend(
+    NOVA_API_ROUTES.chat,
+    {
+      message:
+        "Respond in clean professional text. Do not use markdown symbols like #, ##, ###, **, *, ---, code blocks.\n\n" +
+        message,
+      history: getActiveConversation()?.messages.slice(-8) || []
+    }
+  );
+
+  return cleanAIResponse(response.text);
 }
 
 async function callNovaBackend(route, payload) {
@@ -583,7 +589,22 @@ async function callNovaAuth(route, options = {}) {
 
   return data;
 }
+function cleanAIResponse(text) {
+  if (!text) return "";
 
+  return text
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/#{1,6}\s?/g, "")
+    .replace(/\*\*/g, "")
+    .replace(/\*/g, "")
+    .replace(/__/g, "")
+    .replace(/_/g, "")
+    .replace(/`/g, "")
+    .replace(/---+/g, "")
+    .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
 function buildFallbackResponse(message) {
   return `I'm having trouble reaching the AI service right now.\n\nHere's a quick framework to move forward with **"${message}"**:\n\n1. **Clarify the goal** — What's the single most important outcome?\n2. **Break it down** — Identify 3 focused next steps.\n3. **Start with the fastest win** — Pick the step you can complete right now.\n4. **Save your best prompt** — Use the prompt library to reuse this later.\n\nTry again in a moment and NOVA will give you a full response.`;
 }
@@ -1178,12 +1199,19 @@ function toggleVoiceMode() {
       const transcript = event.results[0][0].transcript;
       if (voiceStatus) voiceStatus.textContent = `You said: ${transcript}`;
       const response = await askFreeAI(transcript).catch(() =>
-        buildFallbackResponse(transcript)
-      );
-      if (voiceStatus) voiceStatus.textContent = response;
-      speakResponse(response);
-      saveChatMessage("user", transcript);
-      saveChatMessage("ai", response);
+  buildFallbackResponse(transcript)
+);
+
+const cleanResponse = cleanAIResponse(response);
+
+if (voiceStatus) {
+  voiceStatus.textContent = cleanResponse;
+}
+
+speakResponse(cleanResponse);
+
+saveChatMessage("user", transcript);
+saveChatMessage("ai", cleanResponse);
     };
 
     recognition.onend = () => setVoiceState(false);
