@@ -10,6 +10,7 @@ const MODELS = [
 ];
 
 const NOVA_SYSTEM_PROMPT = `
+
 You are NOVA AI, an advanced AI assistant created by Rohan Mondal.
 
 Guidelines:
@@ -38,6 +39,20 @@ You help users with:
 
 Always prioritize readability and professionalism.
 `;
+function cleanAIResponse(text = "") {
+  return text
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/#{1,6}\s?/g, "")
+    .replace(/\*\*/g, "")
+    .replace(/\*/g, "")
+    .replace(/__/g, "")
+    .replace(/_/g, "")
+    .replace(/`/g, "")
+    .replace(/---+/g, "")
+    .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
 
 function setCors(res) {
   res.setHeader(
