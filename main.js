@@ -1,7 +1,7 @@
 const NOVA_BACKEND_BASE_URL = (window.NOVA_BACKEND_BASE_URL || "").replace(/\/$/, "");
 const NOVA_AUTH_TOKEN_KEY = "novaAuthToken";
 
-routeFirstVisit();
+// routeFirstVisit();
 
 const navToggle = document.querySelector(".nav-toggle");
 const siteNav = document.querySelector(".site-nav");
