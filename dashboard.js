@@ -1527,7 +1527,7 @@ function setGreeting() {
   if (hour < 12) greeting = "Good Morning";
   else if (hour < 17) greeting = "Good Afternoon";
 
-  const name = state.currentUser?.name || "Rohan";
+  const name = state.currentUser?.name || "User";
   if (greetingTitle) greetingTitle.textContent = `${greeting}, ${name}`;
   if (greetingSubtitle) {
     greetingSubtitle.textContent =
