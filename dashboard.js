@@ -1602,7 +1602,7 @@ async function generateImage() {
   const prompt =
     document.getElementById("imagePrompt").value.trim() ||
     "NOVA AI futuristic SaaS platform neon blue purple";
-  const fullPrompt = `${type}, ${prompt}, futuristic premium AI startup design, neon blue purple, cinematic, high detail`;
+  const imageStyles = {   "Logo": "professional logo design",   "Wallpaper": "high quality wallpaper",   "Thumbnail": "youtube thumbnail",   "Poster": "professional advertising poster",   "Social Graphic": "social media graphic" };  const fullPrompt = `${prompt}, ${imageStyles[type] || ""}`;
   let url;
   try {
     const response = await callNovaBackend(NOVA_API_ROUTES.image, {
