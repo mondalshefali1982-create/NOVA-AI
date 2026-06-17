@@ -1646,6 +1646,7 @@ function createPlaceholderImage(prompt) {
 function renderImages() {
   const gallery = document.getElementById("imageGallery");
   if (!gallery) return;
+
   gallery.innerHTML = state.images.length
     ? ""
     : '<p class="conversation-empty">Generated images will appear here.</p>';
@@ -1654,7 +1655,21 @@ function renderImages() {
 
   state.images.forEach((image) => {
     const card = document.createElement("article");
-    card.innerHTML = `<img src="${image.url}" alt="${escapeHtml(image.prompt)}"><p>${escapeHtml(image.prompt)}</p>`;
+
+    card.innerHTML = `
+      <img src="${image.url}" alt="${escapeHtml(image.prompt)}">
+      <p>${escapeHtml(image.prompt)}</p>
+      <button class="delete-image-btn">🗑 Delete</button>
+    `;
+
+    card.querySelector(".delete-image-btn").addEventListener("click", () => {
+      state.images = state.images.filter(img => img.id !== image.id);
+
+      store.set("novaImages", state.images);
+
+      renderImages();
+    });
+
     fragment.appendChild(card);
   });
 
