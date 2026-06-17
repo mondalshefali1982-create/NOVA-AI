@@ -1877,4 +1877,22 @@ function registerServiceWorker() {
       .then((registration) => registration.update())
       .catch(() => {});
   }
+  document
+  .getElementById("closeImageModal")
+  ?.addEventListener("click", () => {
+
+    document.getElementById("imageModal")
+      .style.display = "none";
+});
+
+document
+  .getElementById("imageModal")
+  ?.addEventListener("click", (e) => {
+
+    if (e.target.id === "imageModal") {
+
+      document.getElementById("imageModal")
+        .style.display = "none";
+    }
+});
 }
