@@ -2612,3 +2612,11 @@ body[data-accent="indigo"] {
     min-height:60px;
     white-space:pre-wrap;
 }
+.delete-image-btn{
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
