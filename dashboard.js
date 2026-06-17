@@ -1686,13 +1686,18 @@ function renderImages() {
   }
 });
 
-    card.querySelector(".delete-image-btn").addEventListener("click", () => {
-      state.images = state.images.filter(img => img.id !== image.id);
+    const imageElement = card.querySelector("img");
 
-      store.set("novaImages", state.images);
+imageElement.style.cursor = "pointer";
 
-      renderImages();
-    });
+imageElement.addEventListener("click", () => {
+  document.getElementById("imageModal").style.display = "flex";
+
+  document.getElementById("modalImage").src = image.url;
+
+  document.getElementById("modalPrompt").textContent =
+    image.prompt;
+});
 
     fragment.appendChild(card);
   });
