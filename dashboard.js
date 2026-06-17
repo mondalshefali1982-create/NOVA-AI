@@ -352,6 +352,7 @@ document.getElementById("generateDocBtn")?.addEventListener("click", generateDoc
 document.getElementById("copyDocBtn")?.addEventListener("click", copyDocument);
 document.getElementById("downloadDocBtn")?.addEventListener("click", downloadDocument);
 document.getElementById("generateImageBtn")?.addEventListener("click", generateImage);
+document.getElementById("imageSearch")?.addEventListener("input", renderImages);
 document.getElementById("generatePlanBtn")?.addEventListener("click", generatePlan);
 document.getElementById("exportMemoryBtn")?.addEventListener("click", exportMemory);
 document.getElementById("commandPill")?.addEventListener("click", openCommandPalette);
@@ -1667,7 +1668,16 @@ function renderImages() {
 
   const fragment = document.createDocumentFragment();
 
-  state.images.forEach((image) => {
+const searchTerm =
+  document.getElementById("imageSearch")
+    ?.value
+    .toLowerCase() || "";
+
+const filteredImages = state.images.filter(image =>
+  image.prompt.toLowerCase().includes(searchTerm)
+);
+
+filteredImages.forEach((image) => {
     const card = document.createElement("article");
 
     card.innerHTML = `
