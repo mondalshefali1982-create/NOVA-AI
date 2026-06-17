@@ -2634,34 +2634,45 @@ body[data-accent="indigo"] {
   border-radius:8px;
   cursor:pointer;
 }
+/* Full Screen Image Modal */
+
 .image-modal{
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.9);
-  z-index:9999;
+  background:rgba(0,0,0,.92);
+  z-index:99999;
 
   justify-content:center;
   align-items:center;
   flex-direction:column;
+
+  padding:20px;
 }
 
 .image-modal img{
   max-width:90%;
   max-height:80vh;
+
   border-radius:12px;
 }
 
 .image-modal p{
   margin-top:15px;
-  max-width:90%;
+  max-width:900px;
+
   text-align:center;
 }
 
 #closeImageModal{
   position:absolute;
+
   top:20px;
   right:30px;
-  font-size:40px;
+
+  font-size:42px;
+
   cursor:pointer;
+
+  user-select:none;
 }
