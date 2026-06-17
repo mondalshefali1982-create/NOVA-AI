@@ -1633,7 +1633,7 @@ if (loading)
     url,
     createdAt: Date.now()
   });
-  state.images = state.images.slice(0, 8);
+  state.images = state.images.slice(0, 50);
   store.set("novaImages", state.images);
   renderImages();
   
