@@ -2688,3 +2688,9 @@ body[data-accent="indigo"] {
   50%{opacity:1;}
   100%{opacity:.4;}
 }
+#imageSearch{
+  width:100%;
+  padding:12px;
+  margin:12px 0;
+  border-radius:10px;
+}
