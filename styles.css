@@ -2676,3 +2676,15 @@ body[data-accent="indigo"] {
 
   user-select:none;
 }
+#imageLoading{
+  margin-top:15px;
+  text-align:center;
+  font-weight:600;
+  animation:pulse 1s infinite;
+}
+
+@keyframes pulse{
+  0%{opacity:.4;}
+  50%{opacity:1;}
+  100%{opacity:.4;}
+}
