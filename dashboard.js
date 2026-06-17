@@ -1657,10 +1657,34 @@ function renderImages() {
     const card = document.createElement("article");
 
     card.innerHTML = `
-      <img src="${image.url}" alt="${escapeHtml(image.prompt)}">
-      <p>${escapeHtml(image.prompt)}</p>
-      <button class="delete-image-btn">🗑 Delete</button>
-    `;
+  <img src="${image.url}" alt="${escapeHtml(image.prompt)}">
+  <p>${escapeHtml(image.prompt)}</p>
+
+  <div class="image-actions">
+    <button class="download-image-btn">⬇ Download JPG</button>
+    <button class="delete-image-btn">🗑 Delete</button>
+  </div>
+`;
+    card.querySelector(".download-image-btn").addEventListener("click", async () => {
+  try {
+    const response = await fetch(image.url);
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `nova-ai-${Date.now()}.jpg`;
+
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Download failed:", error);
+  }
+});
 
     card.querySelector(".delete-image-btn").addEventListener("click", () => {
       state.images = state.images.filter(img => img.id !== image.id);
