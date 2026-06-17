@@ -1610,14 +1610,22 @@ if (loading)
   const imageStyles = {   "Logo": "professional logo design",   "Wallpaper": "high quality wallpaper",   "Thumbnail": "youtube thumbnail",   "Poster": "professional advertising poster",   "Social Graphic": "social media graphic" };  const fullPrompt = `${prompt}, ${imageStyles[type] || ""}`;
   let url;
   try {
-    const response = await callNovaBackend(NOVA_API_ROUTES.image, {
+  const response = await callNovaBackend(
+    NOVA_API_ROUTES.image,
+    {
       prompt: fullPrompt,
       type
-    });
-    url = response.url;
-  } catch {
-    url = createPlaceholderImage(fullPrompt);
-  }
+    }
+  );
+
+  url = response.url;
+} catch {
+  url = createPlaceholderImage(fullPrompt);
+} finally {
+
+  if (loading)
+    loading.style.display = "none";
+}
   state.images.unshift({
     id: crypto.randomUUID(),
     prompt: fullPrompt,
@@ -1627,6 +1635,7 @@ if (loading)
   state.images = state.images.slice(0, 8);
   store.set("novaImages", state.images);
   renderImages();
+  
 }
 
 function createPlaceholderImage(prompt) {
