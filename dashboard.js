@@ -1598,6 +1598,11 @@ function downloadDocument() {
 // ─── Image Generation ─────────────────────────────────────────────────────────
 
 async function generateImage() {
+  const loading =
+  document.getElementById("imageLoading");
+
+if (loading)
+  loading.style.display = "block";
   const type = document.getElementById("imageType").value;
   const prompt =
     document.getElementById("imagePrompt").value.trim() ||
