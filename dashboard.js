@@ -1685,7 +1685,13 @@ function renderImages() {
     console.error("Download failed:", error);
   }
 });
+card.querySelector(".delete-image-btn").addEventListener("click", () => {
+  state.images = state.images.filter(img => img.id !== image.id);
 
+  store.set("novaImages", state.images);
+
+  renderImages();
+});
     const imageElement = card.querySelector("img");
 
 imageElement.style.cursor = "pointer";
