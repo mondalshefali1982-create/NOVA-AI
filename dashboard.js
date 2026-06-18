@@ -1617,7 +1617,7 @@ if (loading)
     const response = await callNovaBackend(
       NOVA_API_ROUTES.image,
       {
-        prompt: `${fullPrompt}, unique composition, variation ${i + 1}`
+        prompt: `${fullPrompt} variation ${i + 1}`,
         type
       }
     );
