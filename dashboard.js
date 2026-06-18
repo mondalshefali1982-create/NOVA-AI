@@ -1633,6 +1633,12 @@ async function generateImage() {
   showImageGenerationOverlay(imageCount);
 
   try {
+    const variations = [
+  "minimalist design",
+  "cinematic lighting",
+  "professional studio quality",
+  "creative artistic composition"
+];
     for (let i = 0; i < imageCount; i++) {
       updateImageGenerationOverlay(i, imageCount);
 
@@ -1640,7 +1646,13 @@ async function generateImage() {
         await delay(1400);
       }
 
-      const imagePrompt = `${fullPrompt} variation ${i + 1}`;
+    const randomSeed =
+Math.floor(Math.random() * 1000000);
+
+const imagePrompt =
+`${fullPrompt},
+${variations[i % variations.length]},
+seed ${randomSeed}`;
       const response = await generateImageWithRetry({ prompt: imagePrompt, type });
       const image = {
         id: crypto.randomUUID(),
