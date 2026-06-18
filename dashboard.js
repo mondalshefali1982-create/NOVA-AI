@@ -1609,7 +1609,16 @@ const imageGenerationMessages = [
 let imageStatusTimer = null;
 let imageSkeletonCount = 0;
 const freshImageIds = new Set();
+function waitForImageLoad(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
 
+    img.onload = () => resolve();
+    img.onerror = reject;
+
+    img.src = url;
+  });
+}
 async function generateImage() {
   const loading = document.getElementById("imageLoading");
   const generateButton = document.getElementById("generateImageBtn");
@@ -1638,6 +1647,7 @@ async function generateImage() {
 
       const imagePrompt = `${fullPrompt} variation ${i + 1}`;
       const response = await generateImageWithRetry({ prompt: imagePrompt, type });
+      await waitForImageLoad(response.url);
       const image = {
         id: crypto.randomUUID(),
         prompt: `${fullPrompt} (${i + 1})`,
@@ -1655,7 +1665,7 @@ async function generateImage() {
     }
 
     showImageGenerationSuccess();
-    await delay(1100);
+    await delay(2000);
   } catch (error) {
     setImageGenerationStatus(error.message || "Image generation paused. Please try again.");
     await delay(1300);
