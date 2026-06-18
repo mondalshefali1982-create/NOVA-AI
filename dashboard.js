@@ -1659,7 +1659,7 @@ async function generateImage() {
     }
 
     showImageGenerationSuccess();
-    await delay(1100);
+    await delay(2200);
   } catch (error) {
     setImageGenerationStatus(error.message || "Image generation paused. Please try again.");
     await delay(1300);
