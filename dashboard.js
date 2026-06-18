@@ -1613,6 +1613,9 @@ if (loading)
   try {
 
   for (let i = 0; i < imageCount; i++) {
+    await new Promise(resolve =>
+  setTimeout(resolve, 1000)
+);
 
     const response = await callNovaBackend(
       NOVA_API_ROUTES.image,
