@@ -1633,12 +1633,58 @@ async function generateImage() {
   showImageGenerationOverlay(imageCount);
 
   try {
-    const variations = [
-  "minimalist design",
-  "cinematic lighting",
-  "professional studio quality",
-  "creative artistic composition"
+    const artStyles = [
+  "digital art",
+  "photorealistic",
+  "cinematic",
+  "concept art"
 ];
+   let variations = [];
+
+if (type === "Wallpaper") {
+  variations = [
+    "deep space galaxy with colorful nebula",
+    "planetary system with giant rings",
+    "cosmic black hole surrounded by stars",
+    "futuristic universe viewed from spaceship"
+  ];
+}
+
+if (type === "Logo") {
+  variations = [
+    "minimalist logo design",
+    "luxury premium logo",
+    "3D futuristic logo",
+    "gradient modern logo"
+  ];
+}
+
+if (type === "Poster") {
+  variations = [
+    "cinematic movie poster",
+    "modern advertising poster",
+    "futuristic marketing poster",
+    "minimal premium poster"
+  ];
+}
+
+if (type === "Thumbnail") {
+  variations = [
+    "youtube gaming thumbnail",
+    "viral tech thumbnail",
+    "high contrast thumbnail",
+    "clickworthy modern thumbnail"
+  ];
+}
+
+if (type === "Social Graphic") {
+  variations = [
+    "instagram post design",
+    "facebook ad creative",
+    "linkedin professional graphic",
+    "modern social media banner"
+  ];
+}
     for (let i = 0; i < imageCount; i++) {
       updateImageGenerationOverlay(i, imageCount);
 
@@ -1649,10 +1695,17 @@ async function generateImage() {
     const randomSeed =
 Math.floor(Math.random() * 1000000);
 
-const imagePrompt =
-`${fullPrompt},
-${variations[i % variations.length]},
-seed ${randomSeed}`;
+const imagePrompt = `
+${fullPrompt},
+${variations[i]},
+different composition,
+different camera angle,
+different perspective,
+different color palette,
+unique artwork,
+high quality,
+seed ${randomSeed}
+`;
       const response = await generateImageWithRetry({ prompt: imagePrompt, type });
       const image = {
         id: crypto.randomUUID(),
