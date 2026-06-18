@@ -1622,7 +1622,7 @@ if (loading)
       }
     );
 
-    urls.push(response.url);
+    console.log("Response:", response);  urls.push(response.url);
   }
 
 } catch {
@@ -1641,6 +1641,7 @@ if (loading)
   if (loading)
     loading.style.display = "none";
 }
+  console.log("All URLs:", urls);
   urls.forEach((url, index) => {
 
   state.images.unshift({
