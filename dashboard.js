@@ -1609,30 +1609,48 @@ if (loading)
     document.getElementById("imagePrompt").value.trim() ||
     "NOVA AI futuristic SaaS platform neon blue purple";
   const imageStyles = {   "Logo": "professional logo design",   "Wallpaper": "high quality wallpaper",   "Thumbnail": "youtube thumbnail",   "Poster": "professional advertising poster",   "Social Graphic": "social media graphic" };  const fullPrompt = `${prompt}, ${imageStyles[type] || ""}`;
-  let url;
+  const imageCount =   Number(document.getElementById("imageCount").value);  const urls = [];
   try {
-  const response = await callNovaBackend(
-    NOVA_API_ROUTES.image,
-    {
-      prompt: fullPrompt,
-      type
-    }
-  );
 
-  url = response.url;
+  for (let i = 0; i < imageCount; i++) {
+
+    const response = await callNovaBackend(
+      NOVA_API_ROUTES.image,
+      {
+        prompt: `${fullPrompt} variation ${i + 1}`,
+        type
+      }
+    );
+
+    urls.push(response.url);
+  }
+
 } catch {
-  url = createPlaceholderImage(fullPrompt);
+
+  for (let i = 0; i < imageCount; i++) {
+
+    urls.push(
+      createPlaceholderImage(
+        `${fullPrompt} variation ${i + 1}`
+      )
+    );
+  }
+
 } finally {
 
   if (loading)
     loading.style.display = "none";
 }
+  urls.forEach((url, index) => {
+
   state.images.unshift({
     id: crypto.randomUUID(),
-    prompt: fullPrompt,
+    prompt: `${fullPrompt} (${index + 1})`,
     url,
     createdAt: Date.now()
   });
+
+});
   state.images = state.images.slice(0, 50);
   store.set("novaImages", state.images);
   renderImages();
