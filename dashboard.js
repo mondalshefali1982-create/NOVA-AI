@@ -352,6 +352,21 @@ document.getElementById("generateDocBtn")?.addEventListener("click", generateDoc
 document.getElementById("copyDocBtn")?.addEventListener("click", copyDocument);
 document.getElementById("downloadDocBtn")?.addEventListener("click", downloadDocument);
 document.getElementById("generateImageBtn")?.addEventListener("click", generateImage);
+document
+  .getElementById("enhancePromptBtn")
+  ?.addEventListener("click", () => {
+
+    const promptBox =
+      document.getElementById("imagePrompt");
+
+    const type =
+      document.getElementById("imageType").value;
+
+    if (!promptBox.value.trim()) return;
+
+    promptBox.value =
+      enhancePrompt(promptBox.value, type);
+});
 document.getElementById("imageSearch")?.addEventListener("input", renderImages);
 document.getElementById("generatePlanBtn")?.addEventListener("click", generatePlan);
 document.getElementById("exportMemoryBtn")?.addEventListener("click", exportMemory);
@@ -1613,6 +1628,27 @@ let imageTitleFadeTimer = null;
 let imageSuccessTimer = null;
 let imageSkeletonCount = 0;
 const freshImageIds = new Set();
+function enhancePrompt(prompt, type) {
+
+  const templates = {
+    Logo:
+      "professional logo design, modern vector style, clean typography, premium branding",
+
+    Wallpaper:
+      "high quality wallpaper, ultra detailed, cinematic lighting, stunning composition",
+
+    Thumbnail:
+      "youtube thumbnail, clickworthy design, vibrant colors, professional content creator style",
+
+    Poster:
+      "professional advertising poster, modern marketing design, high impact visuals",
+
+    "Social Graphic":
+      "social media graphic, modern design, engaging composition, premium quality"
+  };
+
+  return `${prompt}, ${templates[type] || ""}`;
+}
 
 async function generateImage() {
   const loading = document.getElementById("imageLoading");
