@@ -1636,30 +1636,50 @@ let imageTitleFadeTimer = null;
 let imageSuccessTimer = null;
 let imageSkeletonCount = 0;
 const freshImageIds = new Set();
-function enhancePrompt(prompt, type) {
+function getPromptVariations(type) {
 
-  const templates = {
-    Logo:
-      "professional logo design, modern vector style, clean typography, premium branding",
+  const variationMap = {
 
-    Wallpaper:
-      "high quality wallpaper, ultra detailed, cinematic lighting, stunning composition",
+    Wallpaper: [
+      "cinematic composition",
+      "wide angle perspective",
+      "dramatic lighting",
+      "epic environment"
+    ],
 
-    Thumbnail:
-      "youtube thumbnail, clickworthy design, vibrant colors, professional content creator style",
+    Logo: [
+      "minimalist style",
+      "premium luxury style",
+      "modern futuristic style",
+      "creative geometric style"
+    ],
 
-    Poster:
-      "professional advertising poster, modern marketing design, high impact visuals",
+    Thumbnail: [
+      "viral youtube style",
+      "high contrast style",
+      "professional creator style",
+      "clickworthy composition"
+    ],
 
-    "Social Graphic":
-      "social media graphic, modern design, engaging composition, premium quality"
+    Poster: [
+      "cinematic poster style",
+      "advertising campaign style",
+      "premium marketing style",
+      "minimal modern style"
+    ],
+
+    "Social Graphic": [
+      "instagram style",
+      "linkedin professional style",
+      "facebook advertising style",
+      "modern social design"
+    ]
   };
-
-  return `${prompt}, ${templates[type] || ""}`;
-}
 
   return variationMap[type] || [];
 }
+
+  
 
 async function generateImage() {
   const loading = document.getElementById("imageLoading");
@@ -1698,9 +1718,9 @@ async function generateImage() {
 
     const randomSeed =
 Math.floor(Math.random() * 1000000);
-
 const imagePrompt = `
 ${fullPrompt},
+${variations[i] || ""},
 variation ${i + 1},
 different composition,
 different camera angle,
