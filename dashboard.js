@@ -372,8 +372,12 @@ if (
   return;
 }
 
-promptBox.value =
-  enhancePrompt(promptBox.value, type);
+if (!promptBox.dataset.enhanced) {
+  promptBox.value =
+    enhancePrompt(promptBox.value, type);
+
+  promptBox.dataset.enhanced = "true";
+}
 });
 document.getElementById("imageSearch")?.addEventListener("input", renderImages);
 document.getElementById("generatePlanBtn")?.addEventListener("click", generatePlan);
@@ -1641,11 +1645,11 @@ function getPromptVariations(type) {
   const variationMap = {
 
     Wallpaper: [
-      "cinematic composition",
-      "wide angle perspective",
-      "dramatic lighting",
-      "epic environment"
-    ],
+  "cinematic composition",
+  "ultra realistic photography",
+  "epic environment design",
+  "creative artistic interpretation"
+],
 
     Logo: [
       "minimalist style",
@@ -1691,6 +1695,24 @@ function getPromptVariations(type) {
   return `${prompt}, ${styles[type] || ""}, highly detailed, 8k quality, professional composition`;
 }
 
+function getRandomStyle() {
+
+  const styles = [
+    "photorealistic",
+    "cinematic photography",
+    "concept art",
+    "fantasy illustration",
+    "digital painting",
+    "3D render",
+    "ultra realistic",
+    "award winning artwork"
+  ];
+
+  return styles[
+    Math.floor(Math.random() * styles.length)
+  ];
+}
+
 async function generateImage() {
   const loading = document.getElementById("imageLoading");
   const generateButton = document.getElementById("generateImageBtn");
@@ -1726,10 +1748,14 @@ async function generateImage() {
         await delay(1400);
       }
 
-   const randomSeed = Math.floor(Math.random() * 1000000);
+  const randomSeed =
+Date.now() +
+Math.floor(Math.random() * 9999999);
 
 const imagePrompt = `
 ${fullPrompt}
+Art Style:
+${getRandomStyle()}
 
 STYLE: ${variations[i] || "unique style"}
 
@@ -1778,7 +1804,7 @@ Seed: ${randomSeed}
       const response = await generateImageWithRetry({ prompt: imagePrompt, type });
       const image = {
         id: crypto.randomUUID(),
-        prompt: `${fullPrompt} (${i + 1})`,
+        prompt: `${prompt} (${i + 1})`,
         url: response.url,
         createdAt: Date.now()
       };
