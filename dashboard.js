@@ -1679,7 +1679,17 @@ function getPromptVariations(type) {
   return variationMap[type] || [];
 }
 
-  
+  function enhancePrompt(prompt, type) {
+  const styles = {
+    Logo: "professional logo design, vector, clean branding, premium quality",
+    Wallpaper: "ultra HD wallpaper, cinematic lighting, detailed environment",
+    Thumbnail: "viral youtube thumbnail, high contrast, eye catching",
+    Poster: "professional advertising poster, marketing quality",
+    "Social Graphic": "modern social media graphic, engaging design"
+  };
+
+  return `${prompt}, ${styles[type] || ""}, highly detailed, 8k quality, professional composition`;
+}
 
 async function generateImage() {
   const loading = document.getElementById("imageLoading");
@@ -1716,12 +1726,10 @@ async function generateImage() {
         await delay(1400);
       }
 
-    const randomSeed =
-Math.floor(Math.random() * 1000000);
+   const randomSeed = Math.floor(Math.random() * 1000000);
+
 const imagePrompt = `
-${fullPrompt},
-const imagePrompt = `
-${fullPrompt},
+${fullPrompt}
 
 STYLE: ${variations[i] || "unique style"}
 
@@ -1757,17 +1765,15 @@ ${[
   "dynamic diagonal composition"
 ][i % 4]}
 
-seed:${Date.now() + i}
-`;
-variation ${i + 1},
-different composition,
-different camera angle,
-different perspective,
-different color palette,
-cinematic lighting,
-ultra detailed,
-high quality,
-seed ${randomSeed}
+Variation ${i + 1}
+Different composition
+Different camera angle
+Different perspective
+Different color palette
+Ultra detailed
+High quality
+
+Seed: ${randomSeed}
 `;
       const response = await generateImageWithRetry({ prompt: imagePrompt, type });
       const image = {
