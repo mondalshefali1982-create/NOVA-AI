@@ -580,9 +580,12 @@ function closeSidebar() {
 
 function restoreChat() {
   migrateSingleChatHistory();
+
   if (!state.activeConversationId || !getActiveConversation()) {
-    createConversation("New chat");
+    renderConversationList();
+    return;
   }
+
   renderActiveConversation();
   renderConversationList();
 }
