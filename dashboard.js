@@ -1657,45 +1657,6 @@ function enhancePrompt(prompt, type) {
 
   return `${prompt}, ${templates[type] || ""}`;
 }
-function getPromptVariations(type) {
-
-  const variationMap = {
-
-    Wallpaper: [
-      "deep space galaxy with colorful nebula",
-      "planetary system with giant rings",
-      "cosmic black hole surrounded by stars",
-      "futuristic universe viewed from spaceship"
-    ],
-
-    Logo: [
-      "minimalist logo design",
-      "luxury premium logo",
-      "3D futuristic logo",
-      "gradient modern logo"
-    ],
-
-    Thumbnail: [
-      "youtube gaming thumbnail",
-      "viral tech thumbnail",
-      "high contrast thumbnail",
-      "clickworthy modern thumbnail"
-    ],
-
-    Poster: [
-      "cinematic movie poster",
-      "modern advertising poster",
-      "futuristic marketing poster",
-      "premium minimalist poster"
-    ],
-
-    "Social Graphic": [
-      "instagram post design",
-      "linkedin professional graphic",
-      "facebook ad creative",
-      "modern social media banner"
-    ]
-  };
 
   return variationMap[type] || [];
 }
@@ -1740,12 +1701,13 @@ Math.floor(Math.random() * 1000000);
 
 const imagePrompt = `
 ${fullPrompt},
-${variations[i % variations.length]},
+variation ${i + 1},
 different composition,
 different camera angle,
 different perspective,
 different color palette,
-unique artwork,
+cinematic lighting,
+ultra detailed,
 high quality,
 seed ${randomSeed}
 `;
