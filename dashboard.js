@@ -1657,33 +1657,7 @@ function enhancePrompt(prompt, type) {
 
   return `${prompt}, ${templates[type] || ""}`;
 }
-
-async function generateImage() {
-  const loading = document.getElementById("imageLoading");
-  const generateButton = document.getElementById("generateImageBtn");
-
-  if (loading) loading.style.display = "block";
-  if (generateButton) generateButton.disabled = true;
-
-  const type = document.getElementById("imageType").value;
-  const prompt =
-    document.getElementById("imagePrompt").value.trim() ||
-    "NOVA AI futuristic SaaS platform neon blue purple";
-  const imageStyles = {   "Logo": "professional logo design",   "Wallpaper": "high quality wallpaper",   "Thumbnail": "youtube thumbnail",   "Poster": "professional advertising poster",   "Social Graphic": "social media graphic" };  const fullPrompt = `${prompt}, ${imageStyles[type] || ""}`;
-  const imageCount = Number(document.getElementById("imageCount").value);
-
-  imageSkeletonCount = imageCount;
-  renderImages();
-  showImageGenerationOverlay(imageCount);
-
-  try {
-    const artStyles = [
-  "digital art",
-  "photorealistic",
-  "cinematic",
-  "concept art"
-];
-   function getPromptVariations(type) {
+function getPromptVariations(type) {
 
   const variationMap = {
 
@@ -1721,47 +1695,39 @@ async function generateImage() {
       "facebook ad creative",
       "modern social media banner"
     ]
-
   };
 
   return variationMap[type] || [];
 }
 
-if (type === "Logo") {
-  variations = [
-    "minimalist logo design",
-    "luxury premium logo",
-    "3D futuristic logo",
-    "gradient modern logo"
-  ];
-}
+async function generateImage() {
+  const loading = document.getElementById("imageLoading");
+  const generateButton = document.getElementById("generateImageBtn");
 
-if (type === "Poster") {
-  variations = [
-    "cinematic movie poster",
-    "modern advertising poster",
-    "futuristic marketing poster",
-    "minimal premium poster"
-  ];
-}
+  if (loading) loading.style.display = "block";
+  if (generateButton) generateButton.disabled = true;
 
-if (type === "Thumbnail") {
-  variations = [
-    "youtube gaming thumbnail",
-    "viral tech thumbnail",
-    "high contrast thumbnail",
-    "clickworthy modern thumbnail"
-  ];
-}
+  const type = document.getElementById("imageType").value;
+  const prompt =
+    document.getElementById("imagePrompt").value.trim() ||
+    "NOVA AI futuristic SaaS platform neon blue purple";
+  const imageStyles = {   "Logo": "professional logo design",   "Wallpaper": "high quality wallpaper",   "Thumbnail": "youtube thumbnail",   "Poster": "professional advertising poster",   "Social Graphic": "social media graphic" };  const fullPrompt = `${prompt}, ${imageStyles[type] || ""}`;
+  const imageCount = Number(document.getElementById("imageCount").value);
 
-if (type === "Social Graphic") {
-  variations = [
-    "instagram post design",
-    "facebook ad creative",
-    "linkedin professional graphic",
-    "modern social media banner"
-  ];
-}
+  imageSkeletonCount = imageCount;
+  renderImages();
+  showImageGenerationOverlay(imageCount);
+
+  try {
+    const artStyles = [
+  "digital art",
+  "photorealistic",
+  "cinematic",
+  "concept art"
+];
+    const variations = getPromptVariations(type);
+   
+
     for (let i = 0; i < imageCount; i++) {
       updateImageGenerationOverlay(i, imageCount);
 
@@ -1774,7 +1740,7 @@ Math.floor(Math.random() * 1000000);
 
 const imagePrompt = `
 ${fullPrompt},
-${variations[i]},
+${variations[i % variations.length]},
 different composition,
 different camera angle,
 different perspective,
