@@ -1641,10 +1641,44 @@ let imageSuccessTimer = null;
 let imageSkeletonCount = 0;
 const freshImageIds = new Set();
 function getPromptVariations(type) {
+  function getRandomStyle() {
+    function getRandomMood() {
+
+  const moods = [
+    "epic",
+    "dreamlike",
+    "mysterious",
+    "futuristic",
+    "luxurious",
+    "minimalist",
+    "magical",
+    "cinematic"
+  ];
+
+  return moods[
+    Math.floor(Math.random() * moods.length)
+  ];
+}
+
+  const styles = [
+    "photorealistic",
+    "cinematic photography",
+    "concept art",
+    "fantasy illustration",
+    "digital painting",
+    "3D render",
+    "ultra realistic",
+    "award winning artwork"
+  ];
+
+  return styles[
+    Math.floor(Math.random() * styles.length)
+  ];
+}
 
   const variationMap = {
 
-    Wallpaper: [
+   Wallpaper: [
   "cinematic composition",
   "ultra realistic photography",
   "epic environment design",
@@ -1754,8 +1788,13 @@ Math.floor(Math.random() * 9999999);
 
 const imagePrompt = `
 ${fullPrompt}
+
 Art Style:
 ${getRandomStyle()}
+
+Mood:
+${getRandomMood()}
+
 
 STYLE: ${variations[i] || "unique style"}
 
