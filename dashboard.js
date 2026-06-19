@@ -1683,15 +1683,48 @@ async function generateImage() {
   "cinematic",
   "concept art"
 ];
-   let variations = [];
+   function getPromptVariations(type) {
 
-if (type === "Wallpaper") {
-  variations = [
-    "deep space galaxy with colorful nebula",
-    "planetary system with giant rings",
-    "cosmic black hole surrounded by stars",
-    "futuristic universe viewed from spaceship"
-  ];
+  const variationMap = {
+
+    Wallpaper: [
+      "deep space galaxy with colorful nebula",
+      "planetary system with giant rings",
+      "cosmic black hole surrounded by stars",
+      "futuristic universe viewed from spaceship"
+    ],
+
+    Logo: [
+      "minimalist logo design",
+      "luxury premium logo",
+      "3D futuristic logo",
+      "gradient modern logo"
+    ],
+
+    Thumbnail: [
+      "youtube gaming thumbnail",
+      "viral tech thumbnail",
+      "high contrast thumbnail",
+      "clickworthy modern thumbnail"
+    ],
+
+    Poster: [
+      "cinematic movie poster",
+      "modern advertising poster",
+      "futuristic marketing poster",
+      "premium minimalist poster"
+    ],
+
+    "Social Graphic": [
+      "instagram post design",
+      "linkedin professional graphic",
+      "facebook ad creative",
+      "modern social media banner"
+    ]
+
+  };
+
+  return variationMap[type] || [];
 }
 
 if (type === "Logo") {
