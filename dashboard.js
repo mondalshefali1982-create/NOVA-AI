@@ -364,8 +364,16 @@ document
 
     if (!promptBox.value.trim()) return;
 
-    promptBox.value =
-      enhancePrompt(promptBox.value, type);
+if (
+  promptBox.value.includes("professional logo design") ||
+  promptBox.value.includes("high quality wallpaper") ||
+  promptBox.value.includes("youtube thumbnail")
+) {
+  return;
+}
+
+promptBox.value =
+  enhancePrompt(promptBox.value, type);
 });
 document.getElementById("imageSearch")?.addEventListener("input", renderImages);
 document.getElementById("generatePlanBtn")?.addEventListener("click", generatePlan);
