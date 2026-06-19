@@ -1640,26 +1640,7 @@ let imageTitleFadeTimer = null;
 let imageSuccessTimer = null;
 let imageSkeletonCount = 0;
 const freshImageIds = new Set();
-function getPromptVariations(type) {
-  function getRandomStyle() {
-    function getRandomMood() {
-
-  const moods = [
-    "epic",
-    "dreamlike",
-    "mysterious",
-    "futuristic",
-    "luxurious",
-    "minimalist",
-    "magical",
-    "cinematic"
-  ];
-
-  return moods[
-    Math.floor(Math.random() * moods.length)
-  ];
-}
-
+function getRandomStyle() {
   const styles = [
     "photorealistic",
     "cinematic photography",
@@ -1676,14 +1657,31 @@ function getPromptVariations(type) {
   ];
 }
 
-  const variationMap = {
+function getRandomMood() {
+  const moods = [
+    "epic",
+    "dreamlike",
+    "mysterious",
+    "futuristic",
+    "luxurious",
+    "minimalist",
+    "magical",
+    "cinematic"
+  ];
 
-   Wallpaper: [
-  "cinematic composition",
-  "ultra realistic photography",
-  "epic environment design",
-  "creative artistic interpretation"
-],
+  return moods[
+    Math.floor(Math.random() * moods.length)
+  ];
+}
+
+function getPromptVariations(type) {
+  const variationMap = {
+    Wallpaper: [
+      "cinematic composition",
+      "ultra realistic photography",
+      "epic environment design",
+      "creative artistic interpretation"
+    ],
 
     Logo: [
       "minimalist style",
@@ -1716,7 +1714,6 @@ function getPromptVariations(type) {
 
   return variationMap[type] || [];
 }
-
   function enhancePrompt(prompt, type) {
   const styles = {
     Logo: "professional logo design, vector, clean branding, premium quality",
