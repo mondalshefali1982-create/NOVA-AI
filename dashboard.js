@@ -1720,7 +1720,45 @@ async function generateImage() {
 Math.floor(Math.random() * 1000000);
 const imagePrompt = `
 ${fullPrompt},
-${variations[i] || ""},
+const imagePrompt = `
+${fullPrompt},
+
+STYLE: ${variations[i] || "unique style"}
+
+Camera:
+${[
+  "close up shot",
+  "wide angle shot",
+  "bird eye view",
+  "cinematic perspective"
+][i % 4]}
+
+Lighting:
+${[
+  "golden hour",
+  "neon lighting",
+  "dramatic shadows",
+  "soft studio lighting"
+][i % 4]}
+
+Color Palette:
+${[
+  "blue and purple",
+  "orange and teal",
+  "black and gold",
+  "vibrant rainbow"
+][i % 4]}
+
+Composition:
+${[
+  "centered subject",
+  "rule of thirds",
+  "symmetrical design",
+  "dynamic diagonal composition"
+][i % 4]}
+
+seed:${Date.now() + i}
+`;
 variation ${i + 1},
 different composition,
 different camera angle,
