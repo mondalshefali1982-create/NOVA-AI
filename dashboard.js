@@ -364,20 +364,13 @@ document
 
     if (!promptBox.value.trim()) return;
 
-if (
-  promptBox.value.includes("professional logo design") ||
-  promptBox.value.includes("high quality wallpaper") ||
-  promptBox.value.includes("youtube thumbnail")
-) {
-  return;
-}
-
-if (!promptBox.dataset.enhanced) {
-  promptBox.value =
-    enhancePrompt(promptBox.value, type);
-
-  promptBox.dataset.enhanced = "true";
-}
+    promptBox.value =
+      enhancePrompt(promptBox.value, type);
+});
+document
+  .getElementById("imagePrompt")
+  ?.addEventListener("input", (e) => {
+    delete e.target.dataset.enhanced;
 });
 document.getElementById("imageSearch")?.addEventListener("input", renderImages);
 document.getElementById("generatePlanBtn")?.addEventListener("click", generatePlan);
