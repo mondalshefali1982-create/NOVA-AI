@@ -1828,8 +1828,13 @@ ${randomStyle}
 
 Mood:
 ${getRandomMood()}
-STYLE:
+IMPORTANT VARIATION:
 ${variations[i] || "unique style"}
+
+Make this image completely different from previous images.
+Use a unique composition, unique framing,
+unique camera angle, unique color grading,
+and unique artistic direction.
 
 Variation ${i + 1}
 
