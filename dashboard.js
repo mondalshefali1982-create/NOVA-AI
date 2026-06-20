@@ -1674,12 +1674,23 @@ function getRandomMood() {
 
 function getPromptVariations(type) {
   const variationMap = {
-    Wallpaper: [
-      "cinematic composition",
-      "ultra realistic photography",
-      "epic environment design",
-      "creative artistic interpretation"
-    ],
+   Wallpaper: [
+  "close up cinematic shot, subject fills the frame",
+
+  "drone view from high above, huge environment visible",
+
+  "side profile composition, dynamic motion blur",
+
+  "top down perspective, completely different layout",
+
+  "low angle shot looking upward",
+
+  "wide landscape scene with tiny subject",
+
+  "first person perspective view",
+
+  "extreme close up detailed shot"
+]
 
     Logo: [
       "minimalist style",
