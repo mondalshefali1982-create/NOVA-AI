@@ -1758,12 +1758,18 @@ async function generateImage() {
 Date.now() +
 Math.floor(Math.random() * 9999999);
 
-      const randomCamera = [
+     const randomCamera = [
   "close up shot",
   "wide angle shot",
   "bird eye view",
-  "drone shot"
-][Math.floor(Math.random() * 4)];
+  "drone shot",
+  "low angle shot",
+  "top down shot",
+  "cinematic perspective",
+  "macro photography",
+  "side view",
+  "front view"
+][Math.floor(Math.random() * 10)];
       const randomLighting = [
   "golden hour lighting",
   "sunset lighting",
@@ -1786,14 +1792,25 @@ Math.floor(Math.random() * 9999999);
   "digital art",
   "concept art",
   "cinematic photography",
-  "3D render"
-][Math.floor(Math.random() * 6)];
+  "3D render",
+  "watercolor painting",
+  "oil painting",
+  "comic book style",
+  "cyberpunk artwork"
+][Math.floor(Math.random() * 10)];
       
       
 const imagePrompt = `
 ${fullPrompt}
+
 Camera Angle:
 ${randomCamera}
+
+Lighting:
+${randomLighting}
+
+Color Palette:
+${randomColors}
 
 Art Style:
 ${randomStyle}
@@ -1813,7 +1830,9 @@ Different visual style
 Seed: ${randomSeed}
 `;
 
-
+console.log("IMAGE", i + 1);
+console.log(imagePrompt);
+      
       const response = await generateImageWithRetry({ prompt: imagePrompt, type });
       const image = {
         id: crypto.randomUUID(),
