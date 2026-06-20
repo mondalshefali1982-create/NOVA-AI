@@ -1690,7 +1690,7 @@ function getPromptVariations(type) {
   "first person perspective view",
 
   "extreme close up detailed shot"
-]
+],
 
     Logo: [
       "minimalist style",
