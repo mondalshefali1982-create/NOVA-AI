@@ -1724,24 +1724,6 @@ function getPromptVariations(type) {
   return `${prompt}, ${styles[type] || ""}`;
 }
 
-function getRandomStyle() {
-
-  const styles = [
-    "photorealistic",
-    "cinematic photography",
-    "concept art",
-    "fantasy illustration",
-    "digital painting",
-    "3D render",
-    "ultra realistic",
-    "award winning artwork"
-  ];
-
-  return styles[
-    Math.floor(Math.random() * styles.length)
-  ];
-}
-
 async function generateImage() {
   const loading = document.getElementById("imageLoading");
   const generateButton = document.getElementById("generateImageBtn");
@@ -1761,18 +1743,7 @@ async function generateImage() {
   showImageGenerationOverlay(imageCount);
 
   try {
-   const styles = [
- "photorealistic",
- "anime",
- "watercolor",
- "oil painting",
- "3D render",
- "concept art",
- "pixel art",
- "comic book",
- "fantasy illustration",
- "cyberpunk"
-];
+   
     const variations = getPromptVariations(type);
    
 
@@ -1793,6 +1764,31 @@ Math.floor(Math.random() * 9999999);
   "bird eye view",
   "drone shot"
 ][Math.floor(Math.random() * 4)];
+      const randomLighting = [
+  "golden hour lighting",
+  "sunset lighting",
+  "neon lighting",
+  "dramatic shadows",
+  "studio lighting",
+  "soft natural lighting"
+][Math.floor(Math.random() * 6)];
+      const randomColors = [
+  "blue and purple",
+  "orange and teal",
+  "black and gold",
+  "red and cyan",
+  "pastel colors",
+  "green and yellow"
+][Math.floor(Math.random() * 6)];
+      const randomStyle = [
+  "photorealistic",
+  "anime",
+  "digital art",
+  "concept art",
+  "cinematic photography",
+  "3D render"
+][Math.floor(Math.random() * 6)];
+      
       
 const imagePrompt = `
 ${fullPrompt}
@@ -1800,59 +1796,24 @@ Camera Angle:
 ${randomCamera}
 
 Art Style:
-${styles[Math.floor(Math.random() * styles.length)]}
+${randomStyle}
 
 Mood:
 ${getRandomMood()}
-
-
-STYLE: ${variations[i] || "unique style"}
-
-const randomCamera = [
-  "close up shot",
-  "wide angle shot",
-  "bird eye view",
-  "cinematic perspective",
-  "drone shot",
-  "low angle shot",
-  "top down view",
-  "macro photography"
-][Math.floor(Math.random() * 8)];
-
-Lighting:
-${[
-  "golden hour",
-  "neon lighting",
-  "dramatic shadows",
-  "soft studio lighting"
-][i % 4]}
-
-Color Palette:
-${[
-  "blue and purple",
-  "orange and teal",
-  "black and gold",
-  "vibrant rainbow"
-][i % 4]}
-
-Composition:
-${[
-  "centered subject",
-  "rule of thirds",
-  "symmetrical design",
-  "dynamic diagonal composition"
-][i % 4]}
+STYLE:
+${variations[i] || "unique style"}
 
 Variation ${i + 1}
+
 Different composition
-Different camera angle
 Different perspective
-Different color palette
-Ultra detailed
-High quality
+Different framing
+Different visual style
 
 Seed: ${randomSeed}
 `;
+
+
       const response = await generateImageWithRetry({ prompt: imagePrompt, type });
       const image = {
         id: crypto.randomUUID(),
