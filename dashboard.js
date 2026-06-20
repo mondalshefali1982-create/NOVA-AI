@@ -1787,11 +1787,20 @@ async function generateImage() {
 Date.now() +
 Math.floor(Math.random() * 9999999);
 
+      const randomCamera = [
+  "close up shot",
+  "wide angle shot",
+  "bird eye view",
+  "drone shot"
+][Math.floor(Math.random() * 4)];
+      
 const imagePrompt = `
 ${fullPrompt}
+Camera Angle:
+${randomCamera}
 
 Art Style:
-${getRandomStyle()}
+${styles[Math.floor(Math.random() * styles.length)]}
 
 Mood:
 ${getRandomMood()}
