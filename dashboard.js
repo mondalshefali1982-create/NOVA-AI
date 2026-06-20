@@ -1654,16 +1654,18 @@ function getRandomStyle() {
 }
 
 function getRandomMood() {
-  const moods = [
-    "epic",
-    "dreamlike",
-    "mysterious",
-    "futuristic",
-    "luxurious",
-    "minimalist",
-    "magical",
-    "cinematic"
-  ];
+ const moods = [
+ "epic",
+ "dreamlike",
+ "dark",
+ "luxurious",
+ "minimalist",
+ "magical",
+ "retro",
+ "futuristic",
+ "vintage",
+ "mysterious"
+];
 
   return moods[
     Math.floor(Math.random() * moods.length)
@@ -1719,7 +1721,7 @@ function getPromptVariations(type) {
     "Social Graphic": "modern social media graphic, engaging design"
   };
 
-  return `${prompt}, ${styles[type] || ""}, highly detailed, 8k quality, professional composition`;
+  return `${prompt}, ${styles[type] || ""}`;
 }
 
 function getRandomStyle() {
@@ -1759,11 +1761,17 @@ async function generateImage() {
   showImageGenerationOverlay(imageCount);
 
   try {
-    const artStyles = [
-  "digital art",
-  "photorealistic",
-  "cinematic",
-  "concept art"
+   const styles = [
+ "photorealistic",
+ "anime",
+ "watercolor",
+ "oil painting",
+ "3D render",
+ "concept art",
+ "pixel art",
+ "comic book",
+ "fantasy illustration",
+ "cyberpunk"
 ];
     const variations = getPromptVariations(type);
    
@@ -1791,13 +1799,16 @@ ${getRandomMood()}
 
 STYLE: ${variations[i] || "unique style"}
 
-Camera:
-${[
+const randomCamera = [
   "close up shot",
   "wide angle shot",
   "bird eye view",
-  "cinematic perspective"
-][i % 4]}
+  "cinematic perspective",
+  "drone shot",
+  "low angle shot",
+  "top down view",
+  "macro photography"
+][Math.floor(Math.random() * 8)];
 
 Lighting:
 ${[
