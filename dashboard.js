@@ -1746,7 +1746,30 @@ async function generateImage() {
   const prompt =
     document.getElementById("imagePrompt").value.trim() ||
     "NOVA AI futuristic SaaS platform neon blue purple";
-  const imageStyles = {   "Logo": "professional logo design",   "Wallpaper": "high quality wallpaper",   "Thumbnail": "youtube thumbnail",   "Poster": "professional advertising poster",   "Social Graphic": "social media graphic" };  const fullPrompt = `${prompt}, ${imageStyles[type] || ""}`;
+  const imageStyles = {   "Logo": "professional logo design",   "Wallpaper": "high quality wallpaper",   "Thumbnail": "youtube thumbnail",   "Poster": "professional advertising poster",   "Social Graphic": "social media graphic" };  let modelPrompt = "";
+
+if (model === "creative") {
+  modelPrompt =
+    "creative artwork, unique composition, imaginative design";
+}
+
+if (model === "realistic") {
+  modelPrompt =
+    "photorealistic, ultra realistic, professional photography";
+}
+
+if (model === "anime") {
+  modelPrompt =
+    "anime style, manga artwork, vibrant colors";
+}
+
+if (model === "logo") {
+  modelPrompt =
+    "professional logo design, vector, clean branding";
+}
+
+const fullPrompt =
+`${prompt}, ${imageStyles[type] || ""}, ${modelPrompt}`;
   const imageCount = Number(document.getElementById("imageCount").value);
 
   imageSkeletonCount = imageCount;
