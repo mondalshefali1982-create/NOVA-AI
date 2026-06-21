@@ -34,7 +34,11 @@ self.addEventListener("fetch", (event) => {
     fetch(event.request)
       .then((response) => {
         const copy = response.clone();
-        caches.open(NOVA_CACHE).then((cache) => cache.put(event.request, copy));
+        if (event.request.url.startsWith("http")) {
+  caches.open(NOVA_CACHE).then((cache) =>
+    cache.put(event.request, copy)
+  );
+}
         return response;
       })
       .catch(() => caches.match(event.request))
