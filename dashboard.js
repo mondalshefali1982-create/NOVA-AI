@@ -1750,8 +1750,7 @@ async function generateImage() {
     "NOVA AI futuristic SaaS platform neon blue purple";
   const imageStyles = {   "Logo": "professional logo design",   "Wallpaper": "high quality wallpaper",   "Thumbnail": "youtube thumbnail",   "Poster": "professional advertising poster",   "Social Graphic": "social media graphic" };  let modelPrompt = "";
 
-  const model =
-document.getElementById("imageModel").value;
+ 
 if (model === "creative") {
   modelPrompt =
     "creative artwork, unique composition, imaginative design";
