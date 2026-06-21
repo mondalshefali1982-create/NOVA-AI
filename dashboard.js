@@ -1743,6 +1743,8 @@ async function generateImage() {
   if (generateButton) generateButton.disabled = true;
 
   const type = document.getElementById("imageType").value;
+  const model =
+  document.getElementById("imageModel").value;
   const prompt =
     document.getElementById("imagePrompt").value.trim() ||
     "NOVA AI futuristic SaaS platform neon blue purple";
