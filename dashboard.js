@@ -1750,6 +1750,8 @@ async function generateImage() {
     "NOVA AI futuristic SaaS platform neon blue purple";
   const imageStyles = {   "Logo": "professional logo design",   "Wallpaper": "high quality wallpaper",   "Thumbnail": "youtube thumbnail",   "Poster": "professional advertising poster",   "Social Graphic": "social media graphic" };  let modelPrompt = "";
 
+  const model =
+document.getElementById("imageModel").value;
 if (model === "creative") {
   modelPrompt =
     "creative artwork, unique composition, imaginative design";
@@ -2280,7 +2282,7 @@ async function loadQuote() {
   const quoteAuthor = document.getElementById("quoteAuthor");
 
   try {
-    const response = await fetch("[https://api.quotable.io/random](https://api.quotable.io/random)");
+    const response = await fetch("[https://dummyjson.com/quotes/random](https://dummyjson.com/quotes/random)");
     if (!response.ok) throw new Error("Quote request failed");
     const data = await response.json();
     if (quoteText) quoteText.textContent = `"${data.content}"`;
