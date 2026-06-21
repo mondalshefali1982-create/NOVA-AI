@@ -2113,9 +2113,6 @@ filteredImages.forEach((image) => {
   <div class="image-actions">
   <button class="download-image-btn">⬇ Download JPG</button>
   <button class="delete-image-btn">🗑 Delete</button>
-  <button class="favorite-image-btn">
-    ${image.favorite ? "❤️ Favorited" : "🤍 Favorite"}
-  </button>
 </div>
 `;
     card.querySelector(".download-image-btn").addEventListener("click", async () => {
@@ -2145,15 +2142,7 @@ card.querySelector(".delete-image-btn").addEventListener("click", () => {
 
   renderImages();
 });
-  card.querySelector(".favorite-image-btn")
-?.addEventListener("click", () => {
-
-  image.favorite = !image.favorite;
-
-  store.set("novaImages", state.images);
-
-  renderImages();
-});
+  
     const imageElement = card.querySelector("img");
 
 imageElement.style.cursor = "pointer";
