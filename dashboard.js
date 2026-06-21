@@ -2111,9 +2111,12 @@ filteredImages.forEach((image) => {
   <p>${escapeHtml(image.prompt)}</p>
 
   <div class="image-actions">
-    <button class="download-image-btn">⬇ Download JPG</button>
-    <button class="delete-image-btn">🗑 Delete</button>
-  </div>
+  <button class="download-image-btn">⬇ Download JPG</button>
+  <button class="delete-image-btn">🗑 Delete</button>
+  <button class="favorite-image-btn">
+    ${image.favorite ? "❤️ Favorited" : "🤍 Favorite"}
+  </button>
+</div>
 `;
     card.querySelector(".download-image-btn").addEventListener("click", async () => {
   try {
@@ -2137,6 +2140,15 @@ filteredImages.forEach((image) => {
 });
 card.querySelector(".delete-image-btn").addEventListener("click", () => {
   state.images = state.images.filter(img => img.id !== image.id);
+
+  store.set("novaImages", state.images);
+
+  renderImages();
+});
+  card.querySelector(".favorite-image-btn")
+?.addEventListener("click", () => {
+
+  image.favorite = !image.favorite;
 
   store.set("novaImages", state.images);
 
