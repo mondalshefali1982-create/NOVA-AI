@@ -206,11 +206,33 @@ function pollinationsUrl(prompt) {
 }
 
 function parseWebsiteProject(raw) {
-  const direct = safeJson(raw, null);
-  if (direct?.html || direct?.pages?.index) return direct;
+  try {
+    const direct = safeJson(raw, null);
 
-  const jsonMatch = String(raw || "").match(/\{[\s\S]*\}/);
-  return jsonMatch ? safeJson(jsonMatch[0], null) : null;
+    if (direct) return direct;
+
+    const jsonMatch = String(raw || "").match(/\{[\s\S]*\}/);
+
+    if (jsonMatch) {
+      const parsed = safeJson(jsonMatch[0], null);
+
+      if (parsed) return parsed;
+    }
+
+    return {
+      html: String(raw || ""),
+      css: "",
+      js: ""
+    };
+  } catch (err) {
+    console.error("Parse Error:", err);
+
+    return {
+      html: "",
+      css: "",
+      js: ""
+    };
+  }
 }
 
 function normalizeApiProject(project, body = {}) {
