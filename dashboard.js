@@ -1779,6 +1779,24 @@ function normalizeWebsiteProject(response, prompt, type, pageMode = "single") {
     updatedAt: Date.now()
   };
 }
+function normalizeWebsitePages(pages = {}, html, pageMode) {
+  const normalized = {
+    index: String(pages?.index || html || "")
+  };
+
+  if (
+    pageMode === "multi" ||
+    pages?.about ||
+    pages?.services ||
+    pages?.contact
+  ) {
+    normalized.about = String(pages?.about || "");
+    normalized.services = String(pages?.services || "");
+    normalized.contact = String(pages?.contact || "");
+  }
+
+  return normalized;
+}
 
 function normalizeWebsiteAnalysis(analysis = {}) {
   return {
