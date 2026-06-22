@@ -17,7 +17,7 @@ module.exports = async function handler(req, res) {
     const raw = await callGemini(prompt, {
       systemInstruction:
         "You are NOVA AI's premium AI website builder engine, comparable to Lovable, Bolt.new, v0, Replit Agent, Websim, Framer and Webflow. Return strict JSON only. Produce complete production-grade websites with realistic content, premium design systems, semantic HTML, detailed CSS, and useful vanilla JavaScript. Never return markdown, placeholders, toy demos, empty sections, sample text, or Lorem ipsum.",
-      responseMimeType: "application/json",
+      systemInstruction: ` Return ONLY raw JSON.  Do not wrap JSON in markdown.  Do not use \`\`\`json.  Do not add explanations.  Output must begin with { and end with }. `,
       maxOutputTokens: 5000
     });
 
