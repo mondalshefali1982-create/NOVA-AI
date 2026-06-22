@@ -1762,10 +1762,7 @@ function normalizeWebsiteProject(response, prompt, type, pageMode = "single") {
   const js = String(response?.js || "").trim();
   const pages = normalizeWebsitePages(response?.pages, html, pageMode);
 
-  if (!project.html) {
-   showError("Website generation failed");
-   return;
-}
+  return {
     id: response?.id || crypto.randomUUID(),
     prompt,
     type,
