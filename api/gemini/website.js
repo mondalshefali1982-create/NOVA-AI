@@ -16,9 +16,16 @@ module.exports = async function handler(req, res) {
     const prompt = buildWebsitePrompt(body, action);
     const raw = await callGemini(prompt, {
       systemInstruction:
-        "You are NOVA AI's premium AI website builder engine, comparable to Lovable, Bolt.new, v0, Replit Agent, Websim, Framer and Webflow. Return strict JSON only. Produce complete production-grade websites with realistic content, premium design systems, semantic HTML, detailed CSS, and useful vanilla JavaScript. Never return markdown, placeholders, toy demos, empty sections, sample text, or Lorem ipsum.",
-      systemInstruction: ` Return ONLY raw JSON.  Do not wrap JSON in markdown.  Do not use \`\`\`json.  Do not add explanations.  Output must begin with { and end with }. `,
-      maxOutputTokens: 5000
+        systemInstruction: `
+You are NOVA AI's premium AI website builder engine.
+
+Return ONLY raw JSON.
+Do not wrap JSON in markdown.
+Do not use \`\`\`json.
+Do not add explanations.
+Output must begin with { and end with }.
+`,
+      maxOutputTokens: 3000
     });
 
     console.log("RAW RESPONSE:"); console.log(String(raw).slice(0, 3000));  const project = parseWebsiteProject(raw);  console.log("PARSED PROJECT:"); console.log(JSON.stringify(project).slice(0, 3000));
@@ -210,16 +217,23 @@ function parseWebsiteProject(raw) {
     const direct = safeJson(raw, null);
 
     if (direct) {
-      if (
-        typeof direct.html === "string" &&
-        direct.html.trim().startsWith("{")
-      ) {
-        const nested = safeJson(direct.html, null);
-        if (nested) return nested;
-      }
 
-      return direct;
-    }
+  // Gemini sometimes returns { "json": {...} }
+  if (direct.json) {
+    return direct.json;
+  }
+
+  // Gemini sometimes returns HTML inside a stringified JSON
+  if (
+    typeof direct.html === "string" &&
+    direct.html.trim().startsWith("{")
+  ) {
+    const nested = safeJson(direct.html, null);
+    if (nested) return nested;
+  }
+
+  return direct;
+}
 
     const jsonMatch = String(raw || "").match(/\{[\s\S]*\}/);
 
