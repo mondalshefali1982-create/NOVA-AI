@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
       maxOutputTokens: 5000
     });
 
-    const project = parseWebsiteProject(raw);
+    console.log("RAW RESPONSE:"); console.log(String(raw).slice(0, 3000));  const project = parseWebsiteProject(raw);  console.log("PARSED PROJECT:"); console.log(JSON.stringify(project).slice(0, 3000));
 
     if (!project?.html && !project?.pages?.index) {
       return res.status(502).json({
