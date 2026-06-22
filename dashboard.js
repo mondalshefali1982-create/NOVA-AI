@@ -1997,37 +1997,40 @@ function getPreviewPageKey() {
 }
 
 function buildWebsitePreviewDocument(project) {
-  const html = project.html || "";
-  let generatedHead = extractHtmlPart(html, "head");  // Remove external scripts that break srcdoc preview generatedHead = generatedHead.replace(   /<script[^>]*src=["'][^"']*fontawesome[^"']*["'][^>]*><\/script>/gi,   "" );
-  const generatedBody = extractHtmlPart(html, "body") || stripDocumentShell(html);
+  let html = project.html || "";
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${generatedHead}
-  <style>${project.css || ""}</style>
-</head>
-<body>
-  ${generatedBody}
+  // Remove external css/js references
+  html = html.replace(
+    /<link[^>]*href=["']style\.css["'][^>]*>/gi,
+    ""
+  );
 
-  <style>
-    body{
-      margin:0;
-      padding:0;
-    }
-  </style>
+  html = html.replace(
+    /<script[^>]*src=["']script\.js["'][^>]*><\/script>/gi,
+    ""
+  );
 
-  <script>
-    try{
+  const generatedHead = extractHtmlPart(html, "head");
+  const generatedBody =
+    extractHtmlPart(html, "body") || stripDocumentShell(html);
+
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    ${generatedHead}
+    <style>
+      ${project.css || ""}
+    </style>
+  </head>
+  <body>
+    ${generatedBody}
+    <script>
       ${project.js || ""}
-    }catch(err){
-      console.error(err);
-    }
-  <\/script>
-</body>
-</html>`;
+    <\/script>
+  </body>
+  </html>
+  `;
 }
 
 function extractHtmlPart(html, tagName) {
