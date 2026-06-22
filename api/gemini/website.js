@@ -231,7 +231,7 @@ if (direct) {
       css: "",
       js: ""
     };
-  } catch (err) {
+   catch (err) {
     console.error("Parse Error:", err);
 
     return {
