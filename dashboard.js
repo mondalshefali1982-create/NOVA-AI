@@ -1879,15 +1879,20 @@ function renderWebsiteHistory() {
     : '<p class="conversation-empty">Generated websites will appear here.</p>';
 
   const fragment = document.createDocumentFragment();
-  state.websites.forEach((project) => {
-    const button = document.createElement("button");
+  const button = document.createElement("button");
+button.type = "button";
+button.className = `website-history-item ${project.id === state.activeWebsiteId ? "active" : ""}`;
+button.innerHTML = `
+  <strong>${escapeHtml(project.name || project.type)} · ${escapeHtml(project.prompt)}</strong>
+  <span>${formatConversationTime(project.updatedAt || project.createdAt)}</span>
+`;
     button.type = "button";
     button.className = `website-history-item ${project.id === state.activeWebsiteId ? "active" : ""}`;
     button.innerHTML = `
       <strong>${escapeHtml(project.name || project.type)} · ${escapeHtml(project.prompt)}</strong>
       <span>${formatConversationTime(project.updatedAt || project.createdAt)}</span>
     `;
-    button.addEventListener("click", () => {
+    button.querySelector(".website-history-item").addEventListener("click", () => {   state.activeWebsiteId = project.id;   localStorage.setItem("novaActiveWebsiteId", project.id);   renderWebsiteGenerator(); });  button.querySelector(".delete-website-btn").addEventListener("click", () => {   if (!confirm("Delete this website?")) return;    state.websites = state.websites.filter(     item => item.id !== project.id   );    store.set("novaWebsites", state.websites);    renderWebsiteGenerator(); });
       state.activeWebsiteId = project.id;
       localStorage.setItem("novaActiveWebsiteId", project.id);
       renderWebsiteGenerator();
