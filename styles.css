@@ -3537,6 +3537,11 @@ body[data-accent="indigo"] {
     transform: rotate(var(--progress-angle, 0deg)) translateY(-44px);
   }
 }
+.website-history-wrapper{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
 .delete-website-btn{
   margin-top:5px;
   padding:6px 10px;
