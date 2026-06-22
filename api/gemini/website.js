@@ -25,7 +25,7 @@ Do not use \`\`\`json.
 Do not add explanations.
 Output must begin with { and end with }.
 `,
-      maxOutputTokens: 3000
+      maxOutputTokens: 5000
     });
 
     console.log("RAW RESPONSE:"); console.log(String(raw).slice(0, 3000));  const project = parseWebsiteProject(raw);  console.log("PARSED PROJECT:"); console.log(JSON.stringify(project).slice(0, 3000));
