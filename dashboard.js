@@ -1998,7 +1998,7 @@ function getPreviewPageKey() {
 
 function buildWebsitePreviewDocument(project) {
   const html = project.html || "";
-  const generatedHead = extractHtmlPart(html, "head");
+  let generatedHead = extractHtmlPart(html, "head");  // Remove external scripts that break srcdoc preview generatedHead = generatedHead.replace(   /<script[^>]*src=["'][^"']*fontawesome[^"']*["'][^>]*><\/script>/gi,   "" );
   const generatedBody = extractHtmlPart(html, "body") || stripDocumentShell(html);
 
   return `<!DOCTYPE html>
