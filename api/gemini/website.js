@@ -205,9 +205,16 @@ function pollinationsUrl(prompt) {
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
 }
 
-function parseWebsiteProject(raw) {
-  try {
-    const direct = safeJson(raw, null);
+const direct = safeJson(raw, null);
+
+if (direct) {
+  if (typeof direct.html === "string" && direct.html.trim().startsWith("{")) {
+    const nested = safeJson(direct.html, null);
+    if (nested) return nested;
+  }
+
+  return direct;
+}
 
     if (direct) return direct;
 
