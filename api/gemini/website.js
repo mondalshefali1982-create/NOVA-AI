@@ -15,18 +15,17 @@ module.exports = async function handler(req, res) {
 
     const prompt = buildWebsitePrompt(body, action);
     const raw = await callGemini(prompt, {
-      systemInstruction:
-        systemInstruction: `
-You are NOVA AI's premium AI website builder engine.
+  systemInstruction: `
+You are NOVA AI's premium AI website builder.
 
-Return ONLY raw JSON.
+Return ONLY valid JSON.
 Do not wrap JSON in markdown.
 Do not use \`\`\`json.
 Do not add explanations.
 Output must begin with { and end with }.
 `,
-      maxOutputTokens: 5000
-    });
+  maxOutputTokens: 4000
+});
 
     console.log("RAW RESPONSE:"); console.log(String(raw).slice(0, 3000));  const project = parseWebsiteProject(raw);  console.log("PARSED PROJECT:"); console.log(JSON.stringify(project).slice(0, 3000));
 
