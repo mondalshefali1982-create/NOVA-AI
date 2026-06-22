@@ -3537,3 +3537,8 @@ body[data-accent="indigo"] {
     transform: rotate(var(--progress-angle, 0deg)) translateY(-44px);
   }
 }
+.delete-website-btn{
+  margin-top:5px;
+  padding:6px 10px;
+  cursor:pointer;
+}
