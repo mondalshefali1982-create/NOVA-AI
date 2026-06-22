@@ -1867,27 +1867,52 @@ function renderWebsiteHistory() {
     ? ""
     : '<p class="conversation-empty">Generated websites will appear here.</p>';
 
-  const fragment = document.createDocumentFragment();
-  const button = document.createElement("button");
-button.type = "button";
-button.className = `website-history-item ${project.id === state.activeWebsiteId ? "active" : ""}`;
-button.innerHTML = `
-  <strong>${escapeHtml(project.name || project.type)} · ${escapeHtml(project.prompt)}</strong>
-  <span>${formatConversationTime(project.updatedAt || project.createdAt)}</span>
-`;
-    button.type = "button";
-    button.className = `website-history-item ${project.id === state.activeWebsiteId ? "active" : ""}`;
-    button.innerHTML = `
+ const fragment = document.createDocumentFragment();
+
+state.websites.forEach((project) => {
+  const wrapper = document.createElement("div");
+  wrapper.className = "website-history-wrapper";
+
+  wrapper.innerHTML = `
+    <button type="button"
+      class="website-history-item ${project.id === state.activeWebsiteId ? "active" : ""}">
       <strong>${escapeHtml(project.name || project.type)} · ${escapeHtml(project.prompt)}</strong>
       <span>${formatConversationTime(project.updatedAt || project.createdAt)}</span>
-    `;
-    button.querySelector(".website-history-item").addEventListener("click", () => {   state.activeWebsiteId = project.id;   localStorage.setItem("novaActiveWebsiteId", project.id);   renderWebsiteGenerator(); });  button.querySelector(".delete-website-btn").addEventListener("click", () => {   if (!confirm("Delete this website?")) return;    state.websites = state.websites.filter(     item => item.id !== project.id   );    store.set("novaWebsites", state.websites);    renderWebsiteGenerator(); });
-      state.activeWebsiteId = project.id;
-      localStorage.setItem("novaActiveWebsiteId", project.id);
-      renderWebsiteGenerator();
-    });
-    fragment.appendChild(button);
+    </button>
+
+    <button type="button"
+      class="delete-website-btn"
+      data-id="${project.id}">
+      🗑️
+    </button>
+  `;
+
+  wrapper.querySelector(".website-history-item").addEventListener("click", () => {
+    state.activeWebsiteId = project.id;
+    localStorage.setItem("novaActiveWebsiteId", project.id);
+    renderWebsiteGenerator();
   });
+
+  wrapper.querySelector(".delete-website-btn").addEventListener("click", () => {
+    if (!confirm("Delete this website?")) return;
+
+    state.websites = state.websites.filter(
+      item => item.id !== project.id
+    );
+
+    store.set("novaWebsites", state.websites);
+
+    if (state.activeWebsiteId === project.id) {
+      state.activeWebsiteId = state.websites[0]?.id || null;
+    }
+
+    renderWebsiteGenerator();
+  });
+
+  fragment.appendChild(wrapper);
+});
+
+history.appendChild(fragment);
 
   history.appendChild(fragment);
 }
