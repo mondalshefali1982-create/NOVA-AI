@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
       systemInstruction:
         "You are NOVA AI's premium AI website builder engine, comparable to Lovable, Bolt.new, v0, Replit Agent, Websim, Framer and Webflow. Return strict JSON only. Produce complete production-grade websites with realistic content, premium design systems, semantic HTML, detailed CSS, and useful vanilla JavaScript. Never return markdown, placeholders, toy demos, empty sections, sample text, or Lorem ipsum.",
       responseMimeType: "application/json",
-      maxOutputTokens: 12000
+      maxOutputTokens: 6000
     });
 
     const project = parseWebsiteProject(raw);
