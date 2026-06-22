@@ -1988,7 +1988,7 @@ function renderWebsitePreview(project) {
   }
 
   const page = getPreviewPageKey();
-  const html = project.pages?.[page] || project.html;
+  const html =   project.pages?.[page] ||   project.pages?.index ||   project.html ||   "";
   frame.srcdoc = buildWebsitePreviewDocument({ ...project, html });
 }
 
