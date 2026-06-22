@@ -801,6 +801,7 @@ function parseSimpleText(text) {
     .join("");
 }
 
+// new file
 /**
  * Renders formatted markdown content into a container element.
  */
