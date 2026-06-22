@@ -17,7 +17,7 @@ const NOVA_API_ROUTES = {
   sync: "/api/conversations/sync"
 };
 
-// ─── Local Storage Helpers ────────────────────────────────────────────────────
+// â”€â”€â”€ Local Storage Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const store = {
   get(key, fallback) {
@@ -32,7 +32,7 @@ const store = {
   }
 };
 
-// ─── Application State ────────────────────────────────────────────────────────
+// â”€â”€â”€ Application State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const state = {
   tasks: store.get("novaTasks", []),
@@ -61,7 +61,7 @@ const state = {
   generatedPrompt: ""
 };
 
-// ─── DOM References ───────────────────────────────────────────────────────────
+// â”€â”€â”€ DOM References â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const panels = document.querySelectorAll(".dashboard-panel");
 const navLinks = document.querySelectorAll("[data-panel]");
@@ -103,7 +103,7 @@ const authModeLabel = document.getElementById("authModeLabel");
 let recognition = null;
 let isListening = false;
 
-// ─── AI Studio Templates ──────────────────────────────────────────────────────
+// â”€â”€â”€ AI Studio Templates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const templates = {
   caption: (input) =>
@@ -116,7 +116,7 @@ const templates = {
     `Rewrite the following copy so it is clearer, more persuasive, and more premium while preserving meaning: ${input}.`
 };
 
-// ─── Initialisation ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Initialisation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 bootstrapDashboard();
 
@@ -161,7 +161,7 @@ function redirectToLogin() {
   window.location.replace(NOVA_LOGIN_PAGE);
 }
 
-// ─── Navigation ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 window.addEventListener("hashchange", activatePanelFromHash);
 
@@ -189,7 +189,7 @@ document.querySelectorAll("[data-panel-target]").forEach((button) => {
   });
 });
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 sidebarToggle?.addEventListener("click", () => {
   setSidebarState(!sidebar?.classList.contains("open"));
@@ -213,7 +213,7 @@ window.addEventListener("resize", () => {
   if (window.innerWidth > 980) closeSidebar();
 });
 
-// ─── Chat ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Chat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 chatForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -263,7 +263,7 @@ function autoResizeInput() {
   chatInput.style.height = `${Math.min(chatInput.scrollHeight, 160)}px`;
 }
 
-// ─── Tasks ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Tasks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 taskForm?.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -274,7 +274,7 @@ taskForm?.addEventListener("submit", (event) => {
   persistTasks();
 });
 
-// ─── Prompts ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Prompts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 document.getElementById("saveLastPrompt")?.addEventListener("click", () => {
   if (state.lastUserPrompt) savePrompt(state.lastUserPrompt);
@@ -289,12 +289,12 @@ document.getElementById("clearPrompts")?.addEventListener("click", () => {
   persistPrompts();
 });
 
-// ─── Conversations ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Conversations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 document.getElementById("newChatBtn")?.addEventListener("click", startNewChat);
 document.getElementById("clearAllChatsBtn")?.addEventListener("click", clearAllChats);
 
-// ─── AI Studio ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ AI Studio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 document.querySelectorAll(".dashboard-tools .tool-card button").forEach((button) => {
   button.addEventListener("click", async () => {
@@ -304,7 +304,7 @@ document.querySelectorAll(".dashboard-tools .tool-card button").forEach((button)
     const input = textarea.value.trim() || "a new AI productivity workflow";
     const prompt = templates[type](input);
 
-    generatedPrompt.textContent = "NOVA is thinking…";
+    generatedPrompt.textContent = "NOVA is thinkingâ€¦";
 
     try {
       const result = await askFreeAI(prompt);
@@ -317,7 +317,7 @@ document.querySelectorAll(".dashboard-tools .tool-card button").forEach((button)
   });
 });
 
-// ─── Settings ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 document.getElementById("themeToggle")?.addEventListener("change", (event) => {
   state.settings.light = event.target.checked;
@@ -350,7 +350,7 @@ document.getElementById("modeSelect")?.addEventListener("change", (event) => {
   updateModeSuggestion();
 });
 
-// ─── Feature Buttons ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Feature Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 document.getElementById("generateDocBtn")?.addEventListener("click", generateDocument);
 document.getElementById("copyDocBtn")?.addEventListener("click", copyDocument);
@@ -408,7 +408,7 @@ document.getElementById("commandPill")?.addEventListener("click", openCommandPal
 document.getElementById("refreshQuote")?.addEventListener("click", loadQuote);
 voiceToggle?.addEventListener("click", toggleVoiceMode);
 
-// ─── Profile ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 authForm?.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -564,7 +564,7 @@ function setAuthButtonsBusy(isBusy) {
   });
 }
 
-// ─── Command Palette ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Command Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 commandPalette?.addEventListener("click", (event) => {
   if (event.target === commandPalette) closeCommandPalette();
@@ -572,7 +572,7 @@ commandPalette?.addEventListener("click", (event) => {
 
 commandInput?.addEventListener("input", renderCommands);
 
-// ─── Panel Management ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Panel Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function activatePanelFromHash() {
   const requested = window.location.hash.replace("#", "") || "overview";
@@ -588,7 +588,7 @@ function activatePanel(id) {
   );
 }
 
-// ─── Sidebar Management ───────────────────────────────────────────────────────
+// â”€â”€â”€ Sidebar Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function setSidebarState(isOpen) {
   sidebar?.classList.toggle("open", isOpen);
@@ -605,7 +605,7 @@ function closeSidebar() {
   setSidebarState(false);
 }
 
-// ─── Chat & Conversations ─────────────────────────────────────────────────────
+// â”€â”€â”€ Chat & Conversations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function restoreChat() {
   migrateSingleChatHistory();
@@ -701,10 +701,10 @@ function cleanAIResponse(text) {
     .trim();
 }
 function buildFallbackResponse(message) {
-  return `I'm having trouble reaching the AI service right now.\n\nHere's a quick framework to move forward with **"${message}"**:\n\n1. **Clarify the goal** — What's the single most important outcome?\n2. **Break it down** — Identify 3 focused next steps.\n3. **Start with the fastest win** — Pick the step you can complete right now.\n4. **Save your best prompt** — Use the prompt library to reuse this later.\n\nTry again in a moment and NOVA will give you a full response.`;
+  return `I'm having trouble reaching the AI service right now.\n\nHere's a quick framework to move forward with **"${message}"**:\n\n1. **Clarify the goal** â€” What's the single most important outcome?\n2. **Break it down** â€” Identify 3 focused next steps.\n3. **Start with the fastest win** â€” Pick the step you can complete right now.\n4. **Save your best prompt** â€” Use the prompt library to reuse this later.\n\nTry again in a moment and NOVA will give you a full response.`;
 }
 
-// ─── Message Rendering ────────────────────────────────────────────────────────
+// â”€â”€â”€ Message Rendering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Converts markdown-like text into clean HTML for chat messages.
@@ -931,7 +931,7 @@ async function streamMessage(element, text) {
   });
 }
 
-// ─── Conversation Management ──────────────────────────────────────────────────
+// â”€â”€â”€ Conversation Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function saveChatMessage(type, text) {
   const conversation = getActiveConversation() || createConversation("New chat");
@@ -1275,7 +1275,7 @@ function migrateSingleChatHistory() {
 }
 
 function buildConversationTitle(text) {
-  return text.length > 42 ? `${text.slice(0, 42)}…` : text;
+  return text.length > 42 ? `${text.slice(0, 42)}â€¦` : text;
 }
 
 function formatConversationTime(timestamp) {
@@ -1286,7 +1286,7 @@ function formatConversationTime(timestamp) {
   return `${Math.round(hours / 24)}d`;
 }
 
-// ─── Typing Indicator ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Typing Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function addTypingMessage(container) {
   const wrapper = document.createElement("div");
@@ -1313,7 +1313,7 @@ function trimMessages(container) {
   }
 }
 
-// ─── Voice Mode ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Voice Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function toggleVoiceMode() {
   const SpeechRecognition =
@@ -1372,7 +1372,7 @@ function setVoiceState(active) {
   isListening = active;
   voiceOrb?.classList.toggle("listening", active);
   if (voiceToggle) voiceToggle.textContent = active ? "Stop Listening" : "Start Listening";
-  if (active && voiceStatus) voiceStatus.textContent = "Listening…";
+  if (active && voiceStatus) voiceStatus.textContent = "Listeningâ€¦";
 }
 
 function speakResponse(text) {
@@ -1384,7 +1384,7 @@ function speakResponse(text) {
   window.speechSynthesis.speak(utterance);
 }
 
-// ─── Command Palette ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Command Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const commands = [
   { label: "Open AI Chat", panel: "ai-chat" },
@@ -1438,7 +1438,7 @@ function renderCommands() {
   commandResults.appendChild(fragment);
 }
 
-// ─── Tasks ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Tasks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function renderTasks() {
   taskList.innerHTML = "";
@@ -1472,7 +1472,7 @@ function renderTasks() {
   taskList.appendChild(fragment);
 }
 
-// ─── Saved Prompts ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Saved Prompts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function renderPrompts() {
   promptList.innerHTML = "";
@@ -1507,7 +1507,7 @@ function savePrompt(text) {
   window.location.hash = "saved-prompts";
 }
 
-// ─── Persist Helpers ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Persist Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function persistTasks() {
   store.set("novaTasks", state.tasks);
@@ -1526,7 +1526,7 @@ function persistSettings() {
   applySettings();
 }
 
-// ─── Settings & Theming ───────────────────────────────────────────────────────
+// â”€â”€â”€ Settings & Theming â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function applySettings() {
   document.body.classList.toggle("light-mode", state.settings.light);
@@ -1565,7 +1565,7 @@ function updateModeSuggestion() {
     modeText[state.settings.mode] || modeText.freelancer;
 }
 
-// ─── Render All ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Render All â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function renderAll() {
   renderTasks();
@@ -1574,7 +1574,7 @@ function renderAll() {
   updateCounters();
 }
 
-// ─── Greeting ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Greeting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function setGreeting() {
   const hour = new Date().getHours();
@@ -1590,7 +1590,7 @@ function setGreeting() {
   }
 }
 
-// ─── Counters ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Counters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function updateCounters() {
   const rc = document.getElementById("requestCount");
@@ -1601,14 +1601,14 @@ function updateCounters() {
   if (pc) pc.textContent = state.prompts.length;
 }
 
-// ─── Loader ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Loader â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function dismissLoader() {
   if (!startupLoader) return;
   window.setTimeout(() => startupLoader.classList.add("hidden"), 850);
 }
 
-// ─── Document Generation ──────────────────────────────────────────────────────
+// â”€â”€â”€ Document Generation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Website Generation
 
@@ -1762,11 +1762,10 @@ function normalizeWebsiteProject(response, prompt, type, pageMode = "single") {
   const js = String(response?.js || "").trim();
   const pages = normalizeWebsitePages(response?.pages, html, pageMode);
 
-  if (!html || !css) {
-    throw new Error("NOVA returned an incomplete website. Try a more detailed prompt.");
-  }
-
-  return {
+  if (!project.html) {
+   showError("Website generation failed");
+   return;
+}
     id: response?.id || crypto.randomUUID(),
     prompt,
     type,
@@ -1885,7 +1884,7 @@ function renderWebsiteHistory() {
     button.type = "button";
     button.className = `website-history-item ${project.id === state.activeWebsiteId ? "active" : ""}`;
     button.innerHTML = `
-      <strong>${escapeHtml(project.name || project.type)} � ${escapeHtml(project.prompt)}</strong>
+      <strong>${escapeHtml(project.name || project.type)} · ${escapeHtml(project.prompt)}</strong>
       <span>${formatConversationTime(project.updatedAt || project.createdAt)}</span>
     `;
     button.addEventListener("click", () => {
@@ -2252,7 +2251,7 @@ function downloadDocument() {
   URL.revokeObjectURL(link.href);
 }
 
-// ─── Image Generation ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Image Generation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const imageGenerationMessages = [
   "\uD83E\uDDE0 Understanding prompt...",
@@ -2770,8 +2769,8 @@ filteredImages.forEach((image) => {
   <p>${escapeHtml(image.prompt)}</p>
 
   <div class="image-actions">
-  <button class="download-image-btn">⬇ Download JPG</button>
-  <button class="delete-image-btn">🗑 Delete</button>
+  <button class="download-image-btn">â¬‡ Download JPG</button>
+  <button class="delete-image-btn">ðŸ—‘ Delete</button>
 </div>
 `;
     card.querySelector(".download-image-btn").addEventListener("click", async () => {
@@ -2835,7 +2834,7 @@ imageElement.addEventListener("click", () => {
   gallery.appendChild(fragment);
 }
 
-// ─── Planner ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Planner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function generatePlan() {
   const input =
@@ -2884,7 +2883,7 @@ function renderPlanner() {
   timeline.appendChild(fragment);
 }
 
-// ─── Memory Export ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Memory Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function exportMemory() {
   const data = {
@@ -2907,7 +2906,7 @@ function exportMemory() {
   URL.revokeObjectURL(link.href);
 }
 
-// ─── Quote ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Quote â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function loadQuote() {
   const quoteText = document.getElementById("quoteText");
@@ -2918,14 +2917,14 @@ async function loadQuote() {
     if (!response.ok) throw new Error("Quote request failed");
     const data = await response.json();
     if (quoteText) quoteText.textContent = `"${data.content}"`;
-    if (quoteAuthor) quoteAuthor.textContent = data.author ? `— ${data.author}` : "";
+    if (quoteAuthor) quoteAuthor.textContent = data.author ? `â€” ${data.author}` : "";
   } catch {
     if (quoteText) quoteText.textContent = "Small focused actions compound into serious momentum.";
-    if (quoteAuthor) quoteAuthor.textContent = "— NOVA AI";
+    if (quoteAuthor) quoteAuthor.textContent = "â€” NOVA AI";
   }
 }
 
-// ─── Utilities ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -2938,7 +2937,7 @@ function escapeHtml(value) {
   );
 }
 
-// ─── Ambient Effects ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Ambient Effects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function addCursorGlow() {
   if (window.matchMedia("(pointer: coarse)").matches) return;
@@ -2992,7 +2991,7 @@ function createParticles() {
   scene.appendChild(fragment);
 }
 
-// ─── Service Worker ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Service Worker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
