@@ -205,18 +205,21 @@ function pollinationsUrl(prompt) {
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
 }
 
-const direct = safeJson(raw, null);
+function parseWebsiteProject(raw) {
+  try {
+    const direct = safeJson(raw, null);
 
-if (direct) {
-  if (typeof direct.html === "string" && direct.html.trim().startsWith("{")) {
-    const nested = safeJson(direct.html, null);
-    if (nested) return nested;
-  }
+    if (direct) {
+      if (
+        typeof direct.html === "string" &&
+        direct.html.trim().startsWith("{")
+      ) {
+        const nested = safeJson(direct.html, null);
+        if (nested) return nested;
+      }
 
-  return direct;
-}
-
-    if (direct) return direct;
+      return direct;
+    }
 
     const jsonMatch = String(raw || "").match(/\{[\s\S]*\}/);
 
@@ -231,7 +234,7 @@ if (direct) {
       css: "",
       js: ""
     };
-   catch (err) {
+  } catch (err) {
     console.error("Parse Error:", err);
 
     return {
