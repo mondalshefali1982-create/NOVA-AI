@@ -2011,7 +2011,21 @@ function buildWebsitePreviewDocument(project) {
 </head>
 <body>
   ${generatedBody}
-  <script>${project.js || ""}<\/script>
+
+  <style>
+    body{
+      margin:0;
+      padding:0;
+    }
+  </style>
+
+  <script>
+    try{
+      ${project.js || ""}
+    }catch(err){
+      console.error(err);
+    }
+  <\/script>
 </body>
 </html>`;
 }
