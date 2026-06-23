@@ -48,7 +48,7 @@ async function callWebsiteModel(prompt) {
       const result = await withTimeout(
         callGemini(prompt, {
           systemInstruction: getWebsiteSystemInstruction(),
-          maxOutputTokens: 2500
+          maxOutputTokens: 1200
         }),
         WEBSITE_TIMEOUT_MS
       );
