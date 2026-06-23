@@ -152,19 +152,11 @@ QUALITY BAR:
 - Include scroll reveal animations, hover states, FAQ interactions, mobile navigation and contact form feedback in script.js.
 - Infer colors, branding, imagery direction and mood from the user prompt.
 
-MANDATORY STRUCTURE UNLESS THE USER EXPLICITLY ASKS OTHERWISE:
-1. Responsive navigation
-2. Hero section
-3. About/story section
-4. Features or services section
-5. Statistics section
-6. Team/trainers/staff/founders section when relevant
-7. Pricing/plans/menu/products section when relevant
-8. Testimonials
-9. FAQ
-10. Contact form
-11. Footer
-12. Smooth navigation behavior
+Mandatory structure:
+- Hero
+- About
+- Services
+- Contact
 
 CATEGORY PLAYBOOK:
 ${categoryGuide}
