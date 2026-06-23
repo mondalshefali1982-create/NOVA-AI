@@ -1696,40 +1696,67 @@ async function generateWebsiteProject() {
     return;
   }
 
-  const preview =
-document.querySelector("iframe");
+  const preview = document.querySelector("iframe");
 
-if (preview) {
-  preview.srcdoc = `
-  <html>
-  <body style="
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    font-family:sans-serif;
-  ">
-    <h2>🚀 Generating Website...</h2>
-  </body>
-  </html>
-  `;
-}
-    const project = normalizeWebsiteProject(response, prompt, type, pageMode);
+  if (preview) {
+    preview.srcdoc = `
+      <html>
+      <body style="
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        height:100vh;
+        font-family:sans-serif;
+      ">
+        <h2>🚀 Generating Website...</h2>
+      </body>
+      </html>
+    `;
+  }
+
+  try {
+    startWebsiteLoadingStatus();
+    setWebsiteBusy(true);
+
+    if (button) {
+      button.textContent = "Generating...";
+    }
+
+    const response = await callWebsiteBackend({
+      action: "generate",
+      prompt,
+      type,
+      pageMode
+    });
+
+    const project = normalizeWebsiteProject(
+      response,
+      prompt,
+      type,
+      pageMode
+    );
 
     state.websites.unshift(project);
     state.websites = state.websites.slice(0, 12);
     state.activeWebsiteId = project.id;
+
     persistWebsiteProjects();
     renderWebsiteGenerator();
     activateWebsiteTab("preview");
-    
+
     setWebsiteStatus("Website generated successfully.");
   } catch (error) {
-    setWebsiteStatus(error.message || "NOVA could not generate the website right now. Please try again.");
+    setWebsiteStatus(
+      error.message ||
+      "NOVA could not generate the website right now."
+    );
   } finally {
     stopWebsiteLoadingStatus();
     setWebsiteBusy(false);
-    if (button) button.textContent = "Generate Website";
+
+    if (button) {
+      button.textContent = "Generate Website";
+    }
   }
 }
 
