@@ -45,8 +45,7 @@ async function callWebsiteModel(prompt) {
 
   for (let attempt = 1; attempt <= WEBSITE_RETRIES + 1; attempt += 1) {
     try {
-      const result = await withTimeout(
-        const result = await withTimeout(
+     const result = await withTimeout(
   callGemini(prompt, {
     preferredModel: "nvidia/nemotron-3-ultra-550b-a55b:free",
     systemInstruction: getWebsiteSystemInstruction(),
