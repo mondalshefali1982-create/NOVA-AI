@@ -1692,6 +1692,12 @@ async function generateWebsiteProject() {
   }
 
   setWebsiteBusy(true);
+  const preview = document.getElementById("websitePreviewFrame");
+
+if (preview) {
+  preview.srcdoc =
+  "<h2 style='padding:40px;text-align:center'>Generating Website...</h2>";
+}
   startWebsiteLoadingStatus();
 
   try {
@@ -1709,6 +1715,7 @@ async function generateWebsiteProject() {
     persistWebsiteProjects();
     renderWebsiteGenerator();
     activateWebsiteTab("preview");
+    
     setWebsiteStatus("Website generated successfully.");
   } catch (error) {
     setWebsiteStatus(error.message || "NOVA could not generate the website right now. Please try again.");
@@ -2988,7 +2995,7 @@ async function loadQuote() {
   const quoteAuthor = document.getElementById("quoteAuthor");
 
   try {
-    const response = await fetch("[https://dummyjson.com/quotes/random](https://dummyjson.com/quotes/random)");
+    const response = await fetch("[https://dummyjson.com/quotes](https://dummyjson.com/quotes/random)");
     if (!response.ok) throw new Error("Quote request failed");
     const data = await response.json();
     if (quoteText) quoteText.textContent = `"${data.content}"`;
