@@ -1,0 +1,597 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NOVA AI dashboard with AI chat, productivity tasks, saved prompts, and workspace settings.">
+  <meta name="theme-color" content="#060816">
+  <title>NOVA AI Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dashboard-body">
+  <div class="startup-loader" id="startupLoader" aria-hidden="true">
+    <div class="loader-core">
+      <span class="loader-logo">N</span>
+      <strong>NOVA AI</strong>
+      <small>Initializing workspace</small>
+      <div class="loader-bar"><span></span></div>
+    </div>
+  </div>
+  <div class="ambient-scene dashboard-ambient" aria-hidden="true">
+    <span class="aurora aurora-one"></span>
+    <span class="aurora aurora-two"></span>
+    <span class="aurora aurora-three"></span>
+    <span class="star-field"></span>
+  </div>
+  <div class="sidebar-overlay" aria-hidden="true"></div>
+  <aside class="dashboard-sidebar" id="dashboardSidebar">
+    <div class="sidebar-head">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">N</span>
+        <span>NOVA AI</span>
+      </a>
+      <button class="sidebar-close" type="button" aria-label="Close dashboard menu">Close</button>
+    </div>
+    <nav class="dashboard-nav" aria-label="Dashboard navigation">
+      <a class="active" href="#overview" data-panel="overview"><span class="nav-icon">D</span>Dashboard</a>
+      <a href="#ai-chat" data-panel="ai-chat"><span class="nav-icon">C</span>AI Chat</a>
+      <a href="#ai-tools" data-panel="ai-tools"><span class="nav-icon">T</span>AI Tools</a>
+      <a href="#voice-mode" data-panel="voice-mode"><span class="nav-icon">V</span>Voice Mode</a>
+      <a href="#studio" data-panel="studio"><span class="nav-icon">G</span>AI Studio</a>
+      <a href="#website-generator" data-panel="website-generator"><span class="nav-icon">W</span>Website Generator</a>
+      <a href="#planner" data-panel="planner"><span class="nav-icon">L</span>Planner</a>
+      <a href="#tasks" data-panel="tasks"><span class="nav-icon">K</span>Tasks</a>
+      <a href="#saved-prompts" data-panel="saved-prompts"><span class="nav-icon">P</span>Saved Prompts</a>
+      <a href="#cloud" data-panel="cloud"><span class="nav-icon">A</span>Account</a>
+      <a href="#settings" data-panel="settings"><span class="nav-icon">S</span>Settings</a>
+    </nav>
+    <a class="sidebar-link" href="index.html">Back to Website</a>
+  </aside>
+
+  <main class="dashboard-main">
+    <header class="dashboard-topbar">
+      <button class="sidebar-toggle" aria-label="Open dashboard menu" aria-controls="dashboardSidebar" aria-expanded="false">Menu</button>
+      <div>
+        <p class="eyebrow">Command center</p>
+        <h1 id="greetingTitle">NOVA Workspace</h1>
+        <p class="greeting-subtitle" id="greetingSubtitle">Your AI workspace is ready.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="command-pill" id="commandPill" type="button">Ctrl K</button>
+        <span class="status-dot"></span>
+        <span>AI online</span>
+      </div>
+    </header>
+
+    <section id="overview" class="dashboard-panel active">
+      <div class="dash-grid stats-row">
+        <article class="dash-card"><span class="mini-label">Requests</span><strong id="requestCount">0</strong><p>AI interactions this session</p></article>
+        <article class="dash-card"><span class="mini-label">Tasks</span><strong id="taskCount">0</strong><p>Open productivity items</p></article>
+        <article class="dash-card"><span class="mini-label">Prompts</span><strong id="promptCount">0</strong><p>Saved reusable prompts</p></article>
+        <article class="dash-card"><span class="mini-label">Focus</span><strong>94%</strong><p>Workspace clarity score</p></article>
+      </div>
+
+      <div class="dashboard-layout">
+        <section class="dash-card chat-panel compact" aria-label="AI chat preview">
+          <div class="panel-heading">
+            <h2>AI Chat</h2>
+            <button class="ghost-btn" data-panel-target="ai-chat">Open</button>
+          </div>
+          <div class="chat-messages" id="overviewMessages"></div>
+        </section>
+
+        <section class="dash-card">
+          <div class="panel-heading">
+            <h2>Motivation</h2>
+            <button class="ghost-btn" id="refreshQuote">Refresh</button>
+          </div>
+          <blockquote id="quoteText">Loading daily motivation...</blockquote>
+          <cite id="quoteAuthor"></cite>
+        </section>
+      </div>
+
+      <div class="analytics-lab">
+        <section class="dash-card activity-card">
+          <div class="panel-heading">
+            <h2>AI Activity</h2>
+            <span class="mini-label">Live</span>
+          </div>
+          <div class="activity-bars" aria-label="AI usage chart">
+            <span style="--h:42%"></span>
+            <span style="--h:68%"></span>
+            <span style="--h:54%"></span>
+            <span style="--h:82%"></span>
+            <span style="--h:62%"></span>
+            <span style="--h:92%"></span>
+            <span style="--h:72%"></span>
+          </div>
+        </section>
+
+        <section class="dash-card progress-card">
+          <div class="panel-heading">
+            <h2>Productivity</h2>
+            <span class="mini-label">Momentum</span>
+          </div>
+          <div class="progress-stack">
+            <label><span>Focus flow</span><strong>94%</strong><i style="--w:94%"></i></label>
+            <label><span>Prompt quality</span><strong>87%</strong><i style="--w:87%"></i></label>
+            <label><span>Task clarity</span><strong>76%</strong><i style="--w:76%"></i></label>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="ai-chat" class="dashboard-panel">
+      <div class="dash-card chat-panel full-chat">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">No-key AI powered</p>
+            <h2>NOVA AI Chat</h2>
+          </div>
+          <div class="chat-actions">
+            <button class="ghost-btn" id="newChatBtn" type="button">New Chat</button>
+            <button class="ghost-btn" id="saveLastPrompt" type="button">Save Last Prompt</button>
+          </div>
+        </div>
+        <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
+        <form class="chat-form" id="chatForm">
+          <input id="chatInput" type="text" placeholder="Ask NOVA to plan, write, summarize, or brainstorm..." autocomplete="off">
+          <button class="btn primary" type="submit">Send</button>
+        </form>
+        <div class="chat-history-panel">
+          <div class="panel-heading">
+            <h2>Recent Chats</h2>
+            <button class="ghost-btn" id="clearAllChatsBtn" type="button">Clear All</button>
+          </div>
+          <div class="conversation-list" id="conversationList"></div>
+        </div>
+        <p class="api-note">NOVA is prepared for secure Gemini via a backend proxy. No API keys are stored in frontend JavaScript.</p>
+      </div>
+    </section>
+
+    <section id="ai-tools" class="dashboard-panel">
+      <div class="section-heading left">
+        <p class="eyebrow">Generate</p>
+        <h2>AI productivity tools</h2>
+      </div>
+      <div class="tool-grid dashboard-tools">
+        <article class="tool-card"><h3>Caption Generator</h3><textarea data-template="caption" placeholder="Describe your post or product..."></textarea><button>Generate Prompt</button></article>
+        <article class="tool-card"><h3>Prompt Builder</h3><textarea data-template="prompt" placeholder="What should the AI help with?"></textarea><button>Generate Prompt</button></article>
+        <article class="tool-card"><h3>Startup Ideas</h3><textarea data-template="startup" placeholder="Industry, audience, or problem..."></textarea><button>Generate Prompt</button></article>
+        <article class="tool-card"><h3>Writing Assistant</h3><textarea data-template="writing" placeholder="Paste copy to improve..."></textarea><button>Generate Prompt</button></article>
+      </div>
+      <div class="dash-card generated-output">
+        <div class="panel-heading">
+          <h2>Generated Output</h2>
+          <button class="ghost-btn" id="saveGeneratedPrompt">Save</button>
+        </div>
+        <p id="generatedPrompt">Choose a tool and generate a reusable prompt.</p>
+      </div>
+    </section>
+
+    <section id="tasks" class="dashboard-panel">
+      <div class="dash-card">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Productivity</p>
+            <h2>Task System</h2>
+          </div>
+        </div>
+        <form class="task-form" id="taskForm">
+          <input id="taskInput" type="text" placeholder="Add a focused task...">
+          <button class="btn primary" type="submit">Add Task</button>
+        </form>
+        <ul class="task-list" id="taskList"></ul>
+      </div>
+    </section>
+
+    <section id="voice-mode" class="dashboard-panel">
+      <div class="dash-card voice-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Voice assistant</p>
+            <h2>NOVA Voice Mode</h2>
+          </div>
+          <button class="btn primary" id="voiceToggle" type="button">Start Listening</button>
+        </div>
+        <div class="voice-orb" id="voiceOrb">
+  <span></span><span></span><span></span>
+</div>
+
+<div class="voice-wave" aria-hidden="true">
+  <span></span><span></span><span></span>
+  <span></span><span></span><span></span>
+</div>
+
+<p id="voiceStatus">
+  Tap start and speak. NOVA will listen, answer,
+  and read the response aloud when supported.
+</p>
+        <div id="voiceResponse" class="voice-response"></div>
+      </div>
+    </section>
+
+    <section id="studio" class="dashboard-panel">
+      <div class="section-heading left">
+        <p class="eyebrow">Creation studio</p>
+        <h2>Documents, images, and business assets.</h2>
+      </div>
+      <div class="studio-grid">
+        <article class="dash-card studio-card">
+          <div class="panel-heading">
+            <h2>AI Document Generator</h2>
+            <button class="ghost-btn" id="copyDocBtn" type="button">Copy</button>
+          </div>
+          <select id="docType">
+            <option value="resume">Resume</option>
+            <option value="cover letter">Cover Letter</option>
+            <option value="LinkedIn post">LinkedIn Post</option>
+            <option value="business email">Business Email</option>
+            <option value="report">Report</option>
+            <option value="proposal">Proposal</option>
+          </select>
+          <textarea id="docInput" placeholder="Describe the goal, audience, details, tone, and key points..."></textarea>
+          <div class="chat-actions">
+            <button class="btn primary" id="generateDocBtn" type="button">Generate Document</button>
+            <button class="ghost-btn" id="downloadDocBtn" type="button">Download</button>
+          </div>
+          <pre id="docOutput">Your generated document will appear here.</pre>
+        </article>
+
+        <article class="dash-card studio-card">
+          <div class="panel-heading">
+            <h2>AI Image Generator</h2>
+            <span class="mini-label">No key</span>
+          </div>
+          <select id="imageType">
+           <option value="Logo">Logo</option>
+<option value="Wallpaper">Wallpaper</option>
+<option value="Thumbnail">Thumbnail</option>
+<option value="Poster">Poster</option>
+<option value="Social Graphic">Social Graphic</option>
+          </select>
+          <select id="imageModel">
+  <option value="creative">🎨 Creative Mode</option>
+  <option value="realistic">📸 Realistic Mode</option>
+  <option value="anime">🌸 Anime Mode</option>
+  <option value="logo">🏢 Logo Mode</option>
+</select>
+          <select id="imageCount">
+  <option value="1">1 Image</option>
+  <option value="2">2 Images</option>
+  <option value="4">4 Images</option>
+</select>
+          <textarea id="imagePrompt" placeholder="Describe the visual style, colors, text, mood, and subject..."></textarea>
+
+<button
+  class="btn secondary"
+  id="enhancePromptBtn"
+  type="button">
+  ✨ Enhance Prompt
+</button>
+
+<button
+  class="btn primary"
+  id="generateImageBtn"
+  type="button">
+  Generate Image
+</button>
+          <div id="imageLoading" style="display:none;">
+  🤖 NOVA is creating your image...
+</div>
+          
+
+<input
+  type="text"
+  id="imageSearch"
+  placeholder="🔍 Search generated images..."
+>
+
+<div class="image-gallery" id="imageGallery"></div>
+          
+        </article>
+      </div>
+    </section>
+
+    <section id="website-generator" class="dashboard-panel">
+      <div class="section-heading left">
+        <p class="eyebrow">Build websites</p>
+        <h2>Website Generator</h2>
+      </div>
+
+      <div class="website-generator-layout">
+        <article class="dash-card website-generator-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">AI website builder</p>
+              <h2>Describe your website</h2>
+            </div>
+            <span class="mini-label">HTML CSS JS</span>
+          </div>
+
+          <textarea id="websitePrompt" placeholder="Describe the website you want to create...&#10;&#10;Example: Create a modern black and gold gym website for IronPulse Fitness with membership plans, trainers, testimonials, smooth animations and a contact form."></textarea>
+
+          <div class="website-template-row" aria-label="Quick start templates">
+            <button type="button" data-website-template="Create a modern black and gold gym website for IronPulse Fitness with membership plans, trainers, testimonials, smooth animations and a contact form.">🏋 Gym</button>
+            <button type="button" data-website-template="Create a warm artisan cafe website with menu highlights, story, gallery, reviews, reservation CTA and cozy premium design.">☕ Cafe</button>
+            <button type="button" data-website-template="Create a premium personal portfolio for a creative developer with case studies, services, testimonials and contact form.">💼 Portfolio</button>
+            <button type="button" data-website-template="Create a futuristic SaaS website with neon blue and purple visuals, feature cards, pricing, integrations, testimonials and signup CTA.">🤖 SaaS</button>
+            <button type="button" data-website-template="Create a conversion-focused ecommerce storefront with product categories, hero offer, benefits, reviews and newsletter signup.">🛒 Ecommerce</button>
+            <button type="button" data-website-template="Create a professional business website for a growth consulting agency with services, stats, team, process, testimonials and contact form.">🏢 Business</button>
+            <button type="button" data-website-template="Create a modern education platform website with courses, instructors, outcomes, pricing, FAQs and enrollment CTA.">🎓 Education</button>
+          </div>
+
+          <select id="websiteType">
+            <option value="Landing Page">Landing Page</option>
+            <option value="Business Website">Business Website</option>
+            <option value="Portfolio">Portfolio</option>
+            <option value="Gym Website">Gym Website</option>
+            <option value="Cafe Website">Cafe Website</option>
+            <option value="E-Commerce Store">E-Commerce Store</option>
+            <option value="SaaS Website">SaaS Website</option>
+            <option value="AI Startup Website">AI Startup Website</option>
+            <option value="Blog">Blog</option>
+            <option value="Personal Website">Personal Website</option>
+          </select>
+
+          <select id="websitePageMode">
+            <option value="single">Single Page</option>
+            <option value="multi">Multi Page</option>
+          </select>
+
+          <button class="btn primary" id="generateWebsiteBtn" type="button">🚀 Generate Website</button>
+
+          <div class="website-builder-tools">
+            <textarea id="websiteImprovePrompt" placeholder="Ask NOVA to improve this website...&#10;Example: Make it more modern, add dark mode, add animations, improve mobile design, use black and gold colors, add a pricing section."></textarea>
+            <button class="btn secondary" id="improveWebsiteBtn" type="button">✨ Improve Website</button>
+            <button class="ghost-btn" id="generateWebsiteImagesBtn" type="button">🖼️ Generate Website Images</button>
+          </div>
+
+          <div class="website-section-tools" aria-label="Regenerate website sections">
+            <button type="button" data-regenerate-section="hero">🔄 Regenerate Hero</button>
+            <button type="button" data-regenerate-section="about">🔄 Regenerate About</button>
+            <button type="button" data-regenerate-section="services">🔄 Regenerate Services</button>
+            <button type="button" data-regenerate-section="pricing">🔄 Regenerate Pricing</button>
+            <button type="button" data-regenerate-section="testimonials">🔄 Regenerate Testimonials</button>
+            <button type="button" data-regenerate-section="faq">🔄 Regenerate FAQ</button>
+          </div>
+
+          <p class="website-status" id="websiteStatus">Describe a website and NOVA will generate a complete project.</p>
+
+          <div class="website-history" id="websiteHistory"></div>
+        </article>
+
+        <article class="dash-card website-output-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Generated project</p>
+              <h2>Code and Preview</h2>
+            </div>
+            <button class="ghost-btn" id="downloadWebsiteZipBtn" type="button">📦 Download Project ZIP</button>
+          </div>
+
+          <div class="website-tabs" role="tablist" aria-label="Website output tabs">
+            <button class="active" type="button" data-website-tab="html">📄 index.html</button>
+            <button type="button" data-website-tab="about" hidden>📄 about.html</button>
+            <button type="button" data-website-tab="services" hidden>📄 services.html</button>
+            <button type="button" data-website-tab="contact" hidden>📄 contact.html</button>
+            <button type="button" data-website-tab="css">🎨 style.css</button>
+            <button type="button" data-website-tab="js">⚡ script.js</button>
+            <button type="button" data-website-tab="preview">👀 Preview</button>
+          </div>
+
+          <div class="website-project-info" id="websiteProjectInfo">
+            <span>Project Name: --</span>
+            <span>Created: --</span>
+            <span>Pages: 0</span>
+            <span>Files: 0</span>
+          </div>
+
+          <div class="website-score-grid" id="websiteScoreGrid">
+            <span>UI Quality: --</span>
+            <span>Responsiveness: --</span>
+            <span>Accessibility: --</span>
+            <span>SEO: --</span>
+          </div>
+
+          <pre class="website-code-viewer active" id="websiteHtmlCode">Generated index.html will appear here.</pre>
+          <pre class="website-code-viewer" id="websiteAboutCode">Generated about.html will appear here.</pre>
+          <pre class="website-code-viewer" id="websiteServicesCode">Generated services.html will appear here.</pre>
+          <pre class="website-code-viewer" id="websiteContactCode">Generated contact.html will appear here.</pre>
+          <pre class="website-code-viewer" id="websiteCssCode">Generated style.css will appear here.</pre>
+          <pre class="website-code-viewer" id="websiteJsCode">Generated script.js will appear here.</pre>
+          <div class="website-preview-toolbar" aria-label="Preview device controls">
+            <button class="active" type="button" data-preview-size="desktop">Desktop View</button>
+            <button type="button" data-preview-size="tablet">Tablet View</button>
+            <button type="button" data-preview-size="mobile">Mobile View</button>
+          </div>
+          <div class="website-preview-shell" id="websitePreviewShell">
+            <iframe
+  class="website-preview-frame"
+  id="websitePreviewFrame"
+  sandbox="allow-scripts allow-same-origin allow-forms">
+</iframe>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="planner" class="dashboard-panel">
+      <div class="dash-card">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Daily operating system</p>
+            <h2>AI Daily Planner</h2>
+          </div>
+          <button class="btn primary" id="generatePlanBtn" type="button">Generate Plan</button>
+        </div>
+        <textarea id="plannerInput" placeholder="What do you need to finish today? Add deadlines, study goals, tasks, or focus areas..."></textarea>
+        <div class="planner-timeline" id="plannerTimeline"></div>
+      </div>
+    </section>
+
+    <section id="saved-prompts" class="dashboard-panel">
+      <div class="dash-card">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Library</p>
+            <h2>Saved Prompts</h2>
+          </div>
+          <button class="ghost-btn" id="clearPrompts">Clear All</button>
+        </div>
+        <div class="prompt-list" id="promptList"></div>
+      </div>
+    </section>
+
+    <section id="settings" class="dashboard-panel">
+      <div class="dash-card settings-card">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Preferences</p>
+            <h2>Settings</h2>
+          </div>
+        </div>
+        <label class="setting-row">
+          <span>Light mode</span>
+          <input type="checkbox" id="themeToggle">
+        </label>
+        <label class="setting-row">
+          <span>Compact interface</span>
+          <input type="checkbox" id="compactToggle">
+        </label>
+        <label class="setting-row">
+          <span>Accent color</span>
+          <select id="accentSelect">
+            <option value="violet">Violet</option>
+            <option value="cyan">Cyan</option>
+            <option value="indigo">Indigo</option>
+          </select>
+        </label>
+        <label class="setting-row">
+          <span>Wallpaper</span>
+          <select id="wallpaperSelect">
+            <option value="mesh">Gradient Mesh</option>
+            <option value="grid">Neon Grid</option>
+            <option value="calm">Calm Space</option>
+          </select>
+        </label>
+        <label class="setting-row">
+          <span>Language</span>
+          <select id="languageSelect">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="bn">Bengali</option>
+          </select>
+        </label>
+        <label class="setting-row">
+          <span>Workspace mode</span>
+          <select id="modeSelect">
+            <option value="freelancer">Freelancer</option>
+            <option value="agency">Agency</option>
+            <option value="creator">Creator</option>
+            <option value="student">Student</option>
+          </select>
+        </label>
+        <div class="theme-preview" id="themePreview">
+          <span></span><strong>Live theme preview</strong><small>Preferences auto-save locally.</small>
+        </div>
+      </div>
+    </section>
+
+    <section id="cloud" class="dashboard-panel">
+      <div class="cloud-grid">
+        <article class="dash-card">
+          <div class="panel-heading">
+            <h2>Account Sync</h2>
+            <span class="mini-label">Ready</span>
+          </div>
+          <p>Local memory stays active for guests. Logged-in users sync conversations securely through the NOVA backend and MongoDB Atlas.</p>
+          <button class="ghost-btn" id="exportMemoryBtn" type="button">Export Local Memory</button>
+        </article>
+        <article class="dash-card">
+          <div class="panel-heading">
+            <h2>Account</h2>
+            <span class="mini-label" id="authModeLabel">Guest</span>
+          </div>
+          <form class="auth-form" id="authForm">
+            <div class="auth-fields" id="authFields">
+              <input id="authDisplayName" type="text" placeholder="Display name" autocomplete="name">
+              <input id="authEmail" type="email" placeholder="Email" autocomplete="email">
+              <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password">
+            </div>
+            <div class="auth-actions">
+              <button class="btn primary" id="loginBtn" type="submit">Login</button>
+              <button class="ghost-btn" id="signupBtn" type="button">Signup</button>
+              <button class="ghost-btn" id="logoutBtn" type="button" hidden>Logout</button>
+            </div>
+          </form>
+          <p id="authStatus">Guest mode is active. Your chats are saved locally until you log in.</p>
+        </article>
+        <article class="dash-card">
+          <div class="panel-heading">
+            <h2>Collaboration</h2>
+            <span class="mini-label">Team</span>
+          </div>
+          <div class="collab-avatars"><span>R</span><span>N</span><span>AI</span></div>
+          <p>Shared workspaces and real-time cursors need a backend. This panel is prepared for future live collaboration.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div class="command-palette" id="commandPalette" aria-hidden="true">
+    <div class="command-box">
+      <input id="commandInput" type="text" placeholder="Search tools or run a command...">
+      <div id="commandResults"></div>
+    </div>
+  </div>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile dashboard navigation">
+    <button type="button" data-mobile-panel="overview"><span>H</span>Home</button>
+    <button type="button" data-mobile-panel="ai-chat"><span>C</span>AI Chat</button>
+    <button type="button" data-mobile-panel="ai-tools"><span>T</span>AI Tools</button>
+    <button type="button" data-mobile-panel="tasks"><span>K</span>Tasks</button>
+    <button type="button" data-mobile-panel="settings"><span>S</span>Settings</button>
+  </nav>
+
+  <script src="config.js"></script> <script src="dashboard.js"></script>
+  <div id="imageModal" class="image-modal">
+  <span id="closeImageModal">&times;</span>
+  <img id="modalImage" src="" alt="">
+  <p id="modalPrompt"></p>
+</div>
+  <div id="imageGenerationOverlay" class="image-generation-overlay" aria-live="polite" aria-hidden="true">
+    <div class="image-generation-particles" aria-hidden="true"></div>
+    <div class="image-generation-grid" aria-hidden="true"></div>
+    <div class="image-generation-panel">
+      <div class="image-core-wrap" aria-hidden="true">
+        <div class="image-core-ring outer"></div>
+        <div class="image-core-ring middle"></div>
+        <div class="image-core-ring inner"></div>
+        <div class="image-core-orb">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <i class="image-core-node node-one"></i>
+        <i class="image-core-node node-two"></i>
+        <i class="image-core-node node-three"></i>
+        <i class="image-core-node node-four"></i>
+      </div>
+      <div class="image-generation-ring" id="imageProgressRing" style="--progress: 0%;">
+        <span id="imageProgressText">0%</span>
+        <i></i>
+      </div>
+      <p class="image-generation-kicker">NOVA AI Image Generator</p>
+      <h2 id="imageGenerationTitle">Generating image 1 of 1...</h2>
+      <p id="imageGenerationStatus">Understanding prompt...</p>
+      <p id="imageGenerationSuccess" hidden>✅ All Images Generated Successfully</p>
+    </div>
+  </div>
+</body>
+</html>
+
