@@ -644,11 +644,13 @@ async function callNovaBackend(route, payload) {
   });
 
   if (!response.ok) {
-    throw new Error(
-      "The AI service is temporarily unavailable. Please try again shortly."
-    );
-  }
+  const errorText = await response.text();
+  console.error("Backend Error:", errorText);
 
+  throw new Error(
+    `Backend Error ${response.status}: ${errorText}`
+  );
+}
   return response.json();
 }
 
@@ -2995,7 +2997,7 @@ async function loadQuote() {
   const quoteAuthor = document.getElementById("quoteAuthor");
 
   try {
-    const response = await fetch("[https://dummyjson.com/quotes](https://dummyjson.com/quotes/random)");
+    const response = await fetch("[https://dummyjson.com/quotes](https://dummyjson.com/quotes)");
     if (!response.ok) throw new Error("Quote request failed");
     const data = await response.json();
     if (quoteText) quoteText.textContent = `"${data.content}"`;
