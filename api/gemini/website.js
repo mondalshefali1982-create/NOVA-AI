@@ -1,6 +1,6 @@
 const { callGemini, getBody, handleOptions, requirePost, sendError, setCors } = require("../_lib/gemini");
 
-const WEBSITE_TIMEOUT_MS = 180000;
+const WEBSITE_TIMEOUT_MS = 90000;
 const WEBSITE_RETRIES = 2;
 const REQUIRED_PAGES = ["index", "about", "services", "contact"];
 
@@ -49,7 +49,7 @@ async function callWebsiteModel(prompt) {
   callGemini(prompt, {
     preferredModel: "nvidia/nemotron-3-ultra-550b-a55b:free",
     systemInstruction: getWebsiteSystemInstruction(),
-    maxOutputTokens: 2000
+    maxOutputTokens: 1200
   }),
   WEBSITE_TIMEOUT_MS
 );
@@ -167,7 +167,7 @@ ${categoryGuide}
 
 ${pageInstruction}
 
-RETURN THIS EXACT JSON SHAPE:
+IMPORTANT:  Return ONLY a valid JSON object.  Do not explain anything. Do not use markdown. Do not wrap in ```json. Do not add text before JSON. Do not add text after JSON.  RETURN THIS EXACT JSON:
 {
   "name": "short project name",
   "html": "complete index.html code",
