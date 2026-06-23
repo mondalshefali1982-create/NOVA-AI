@@ -157,6 +157,9 @@ Mandatory structure:
 - About
 - Services
 - Contact
+Keep HTML under 500 lines.
+Keep CSS under 500 lines.
+Keep JavaScript under 200 lines.
 
 CATEGORY PLAYBOOK:
 ${categoryGuide}
