@@ -1,6 +1,6 @@
 const { callGemini, getBody, handleOptions, requirePost, sendError, setCors } = require("../_lib/gemini");
 
-const WEBSITE_TIMEOUT_MS = 90000;
+const WEBSITE_TIMEOUT_MS = 120000;
 const WEBSITE_RETRIES = 2;
 const REQUIRED_PAGES = ["index", "about", "services", "contact"];
 
@@ -48,7 +48,7 @@ async function callWebsiteModel(prompt) {
       const result = await withTimeout(
         callGemini(prompt, {
           systemInstruction: getWebsiteSystemInstruction(),
-          maxOutputTokens: 90000
+          maxOutputTokens: 2500
         }),
         WEBSITE_TIMEOUT_MS
       );
