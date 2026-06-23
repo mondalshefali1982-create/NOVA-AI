@@ -46,12 +46,14 @@ async function callWebsiteModel(prompt) {
   for (let attempt = 1; attempt <= WEBSITE_RETRIES + 1; attempt += 1) {
     try {
       const result = await withTimeout(
-        callGemini(prompt, {
-          systemInstruction: getWebsiteSystemInstruction(),
-          maxOutputTokens: 800
-        }),
-        WEBSITE_TIMEOUT_MS
-      );
+        const result = await withTimeout(
+  callGemini(prompt, {
+    preferredModel: "nvidia/nemotron-3-ultra-550b-a55b:free",
+    systemInstruction: getWebsiteSystemInstruction(),
+    maxOutputTokens: 2000
+  }),
+  WEBSITE_TIMEOUT_MS
+);
 
       if (!String(result || "").trim()) {
         const error = new Error("AI provider returned an empty response.");
