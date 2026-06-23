@@ -48,7 +48,7 @@ async function callWebsiteModel(prompt) {
       const result = await withTimeout(
         callGemini(prompt, {
           systemInstruction: getWebsiteSystemInstruction(),
-          maxOutputTokens: 1200
+          maxOutputTokens: 800
         }),
         WEBSITE_TIMEOUT_MS
       );
@@ -294,6 +294,7 @@ function pollinationsUrl(prompt) {
 }
 
 function parseWebsiteProject(raw) {
+  console.log("RAW WEBSITE RESPONSE:", raw);
   const text = String(raw || "").trim();
   const direct = tryParseJson(text);
   if (direct) return unwrapProject(direct);
