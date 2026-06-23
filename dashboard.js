@@ -660,7 +660,10 @@ async function callWebsiteBackend(payload, options = {}) {
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), options.timeout || 95000);
+    const timeoutId = window.setTimeout(
+  () => controller.abort(),
+  options.timeout || 180000
+);
 
     try {
       const headers = { "Content-Type": "application/json" };
@@ -1693,22 +1696,24 @@ async function generateWebsiteProject() {
     return;
   }
 
-  setWebsiteBusy(true);
-  const preview = document.getElementById("websitePreviewFrame");
+  const preview =
+document.querySelector("iframe");
 
 if (preview) {
-  preview.srcdoc =
-  "<h2 style='padding:40px;text-align:center'>Generating Website...</h2>";
+  preview.srcdoc = `
+  <html>
+  <body style="
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    font-family:sans-serif;
+  ">
+    <h2>🚀 Generating Website...</h2>
+  </body>
+  </html>
+  `;
 }
-  startWebsiteLoadingStatus();
-
-  try {
-    const response = await callWebsiteBackend({
-      action: "generate",
-      prompt,
-      type,
-      pageMode
-    });
     const project = normalizeWebsiteProject(response, prompt, type, pageMode);
 
     state.websites.unshift(project);
