@@ -2,7 +2,7 @@ const OPENROUTER_ENDPOINT =
   "https://openrouter.ai/api/v1/chat/completions";
 
 const MODELS = [
-  "openai/gpt-oss-120b:free",
+  "qwen/qwen3-32b:free",
   "openai/gpt-oss-20b:free",
   "qwen/qwen3-next-80b-a3b-instruct:free",
   "google/gemma-4-26b-a4b-it:free",
