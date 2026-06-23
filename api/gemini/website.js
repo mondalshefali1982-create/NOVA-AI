@@ -1,6 +1,6 @@
 const { callGemini, getBody, handleOptions, requirePost, sendError, setCors } = require("../_lib/gemini");
 
-const WEBSITE_TIMEOUT_MS = 120000;
+const WEBSITE_TIMEOUT_MS = 180000;
 const WEBSITE_RETRIES = 2;
 const REQUIRED_PAGES = ["index", "about", "services", "contact"];
 
