@@ -1811,6 +1811,25 @@ async function improveWebsiteProject() {
     return;
   }
 
+  const previewFrame = document.getElementById("websitePreviewFrame");
+  if (previewFrame) {
+    previewFrame.srcdoc = `<!DOCTYPE html>
+<html>
+<head><style>
+  body { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh;
+         background:#0a0a14; color:#a0a0d0; font-family:system-ui,sans-serif; margin:0; }
+  .spinner { width:40px; height:40px; border:3px solid rgba(124,58,237,0.3);
+             border-top-color:#7c3aed; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  p { font-size:0.9rem; opacity:0.7; }
+</style></head>
+<body>
+  <div class="spinner"></div>
+  <p>✨ NOVA is improving your website...</p>
+</body>
+</html>`;
+  }
+
   setWebsiteStatus("Improving website intelligently...", true);
   try {
     const response = await callWebsiteBackend({
@@ -1822,6 +1841,23 @@ async function improveWebsiteProject() {
     setWebsiteStatus("Website improved successfully.");
   } catch (error) {
     setWebsiteStatus(error.message || "NOVA could not improve this website right now.");
+    if (previewFrame) {
+      previewFrame.srcdoc = `<!DOCTYPE html>
+<html>
+<head><style>
+  body { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh;
+         background:#0a0a14; color:#e0e0ff; font-family:system-ui,sans-serif; margin:0; padding:2rem; box-sizing:border-box; text-align:center; }
+  .icon { font-size:3rem; margin-bottom:1rem; }
+  h2 { margin:0 0 0.5rem; color:#f87171; font-size:1.25rem; }
+  p { color:#a0a0c0; font-size:0.9rem; max-width:400px; line-height:1.6; }
+</style></head>
+<body>
+  <div class="icon">⚠️</div>
+  <h2>Improvement Failed</h2>
+  <p>${(error.message || "Could not improve website").replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+</body>
+</html>`;
+    }
   }
 }
 
@@ -1830,6 +1866,25 @@ async function regenerateWebsiteSection(section) {
   if (!project) {
     setWebsiteStatus("Generate or reopen a website before regenerating a section.");
     return;
+  }
+
+  const previewFrame = document.getElementById("websitePreviewFrame");
+  if (previewFrame) {
+    previewFrame.srcdoc = `<!DOCTYPE html>
+<html>
+<head><style>
+  body { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh;
+         background:#0a0a14; color:#a0a0d0; font-family:system-ui,sans-serif; margin:0; }
+  .spinner { width:40px; height:40px; border:3px solid rgba(124,58,237,0.3);
+             border-top-color:#7c3aed; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  p { font-size:0.9rem; opacity:0.7; }
+</style></head>
+<body>
+  <div class="spinner"></div>
+  <p>🔄 NOVA is regenerating the ${section} section...</p>
+</body>
+</html>`;
   }
 
   setWebsiteStatus(`Regenerating ${section} section...`, true);
@@ -1843,6 +1898,23 @@ async function regenerateWebsiteSection(section) {
     setWebsiteStatus(`${capitalize(section)} section regenerated.`);
   } catch (error) {
     setWebsiteStatus(error.message || `NOVA could not regenerate the ${section} section.`);
+    if (previewFrame) {
+      previewFrame.srcdoc = `<!DOCTYPE html>
+<html>
+<head><style>
+  body { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh;
+         background:#0a0a14; color:#e0e0ff; font-family:system-ui,sans-serif; margin:0; padding:2rem; box-sizing:border-box; text-align:center; }
+  .icon { font-size:3rem; margin-bottom:1rem; }
+  h2 { margin:0 0 0.5rem; color:#f87171; font-size:1.25rem; }
+  p { color:#a0a0c0; font-size:0.9rem; max-width:400px; line-height:1.6; }
+</style></head>
+<body>
+  <div class="icon">⚠️</div>
+  <h2>Regeneration Failed</h2>
+  <p>${(error.message || "Could not regenerate section").replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+</body>
+</html>`;
+    }
   }
 }
 
@@ -1851,6 +1923,25 @@ async function generateWebsiteImages() {
   if (!project) {
     setWebsiteStatus("Generate or reopen a website before creating images.");
     return;
+  }
+
+  const previewFrame = document.getElementById("websitePreviewFrame");
+  if (previewFrame) {
+    previewFrame.srcdoc = `<!DOCTYPE html>
+<html>
+<head><style>
+  body { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh;
+         background:#0a0a14; color:#a0a0d0; font-family:system-ui,sans-serif; margin:0; }
+  .spinner { width:40px; height:40px; border:3px solid rgba(124,58,237,0.3);
+             border-top-color:#7c3aed; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  p { font-size:0.9rem; opacity:0.7; }
+</style></head>
+<body>
+  <div class="spinner"></div>
+  <p>🖼️ NOVA is generating and inserting images...</p>
+</body>
+</html>`;
   }
 
   setWebsiteStatus("Generating website images...", true);
@@ -1863,6 +1954,23 @@ async function generateWebsiteImages() {
     setWebsiteStatus("Website images inserted successfully.");
   } catch (error) {
     setWebsiteStatus(error.message || "NOVA could not insert website images right now.");
+    if (previewFrame) {
+      previewFrame.srcdoc = `<!DOCTYPE html>
+<html>
+<head><style>
+  body { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh;
+         background:#0a0a14; color:#e0e0ff; font-family:system-ui,sans-serif; margin:0; padding:2rem; box-sizing:border-box; text-align:center; }
+  .icon { font-size:3rem; margin-bottom:1rem; }
+  h2 { margin:0 0 0.5rem; color:#f87171; font-size:1.25rem; }
+  p { color:#a0a0c0; font-size:0.9rem; max-width:400px; line-height:1.6; }
+</style></head>
+<body>
+  <div class="icon">⚠️</div>
+  <h2>Image Generation Failed</h2>
+  <p>${(error.message || "Could not insert website images").replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+</body>
+</html>`;
+    }
   }
 }
 
