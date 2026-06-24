@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/gemini/website.js": {
-      "maxDuration": 60
+      "maxDuration": 120
     },
     "api/gemini/chat.js": {
       "maxDuration": 30
@@ -11,9 +11,6 @@
     },
     "api/gemini/planner.js": {
       "maxDuration": 30
-    },
-    "api/gemini/image.js": {
-      "maxDuration": 15
     }
   },
   "headers": [
