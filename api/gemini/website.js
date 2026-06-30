@@ -1,6 +1,6 @@
 const { callGemini, getBody, handleOptions, requirePost, sendError, setCors } = require("../_lib/gemini");
 
-const WEBSITE_TIMEOUT_MS = 50000;
+const WEBSITE_TIMEOUT_MS = 110000;
 const WEBSITE_RETRIES = 0; // Set to 0 to save time and avoid hitting Vercel timeouts
 const REQUIRED_PAGES = ["index", "about", "services", "contact"];
 
@@ -107,7 +107,7 @@ async function callWebsiteModel(prompt) {
       const result = await withTimeout(
         callGemini(prompt, {
           systemInstruction: getWebsiteSystemInstruction(),
-          maxOutputTokens: 8192, // Ensure the full website response is read from the Gemini API
+          maxOutputTokens: 4096, // Ensure the full website response is read from the Gemini API
           temperature: 0.3,
           jsonMode: true
         }),
