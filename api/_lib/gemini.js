@@ -122,7 +122,7 @@ async function callGemini(prompt, options = {}) {
   // FIX: Raise token limit significantly for website generation
   // Website HTML+CSS+JS can easily require 4000-8000 tokens
   const maxOutputTokens =
-    options.maxOutputTokens || 8192;
+    options.maxOutputTokens || 4096;
   // FIX: Use lower temperature for JSON tasks to ensure reliable output
   const temperature =
     options.temperature !== undefined ? options.temperature : 0.7;
@@ -286,13 +286,7 @@ async function callGemini(prompt, options = {}) {
       );
 
       const timeoutPromise = new Promise((_, reject) =>
-  setTimeout(
-    () =>
-      reject(
-        new Error("OpenRouter request timed out after 60 seconds")
-      ),
-    60000
-  )
+setTimeout(() => reject(new Error("Gemini primary request timed out after 45 seconds")), 45000)
 );
 
       const response = await Promise.race([fetchPromise, timeoutPromise]);
