@@ -286,10 +286,14 @@ async function callGemini(prompt, options = {}) {
       );
 
       const timeoutPromise = new Promise((_, reject) =>
-       setTimeout(
-    () => reject(new Error("Gemini primary request timed out after 60 seconds")),
+  setTimeout(
+    () =>
+      reject(
+        new Error("OpenRouter request timed out after 60 seconds")
+      ),
     60000
-)
+  )
+);
 
       const response = await Promise.race([fetchPromise, timeoutPromise]);
 
@@ -297,11 +301,7 @@ async function callGemini(prompt, options = {}) {
         const details =
           await response.text();
 
-       if (
-    response.status === 404 ||
-    response.status === 429 ||
-    response.status === 503
-) {
+      if (response.status === 429 || response.status === 503) {
           console.log(
             `[callGemini] ${model} rate-limited (${response.status}), trying next model...`
           );
