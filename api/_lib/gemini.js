@@ -2,9 +2,9 @@ const OPENROUTER_ENDPOINT =
   "https://openrouter.ai/api/v1/chat/completions";
 
 const MODELS = [
-  "google/gemini-2.5-flash:free",
-  "qwen/qwen-2.5-coder-32b-instruct:free",
-  "meta-llama/llama-3.3-70b-instruct:free"
+  "google/gemini-2.5-flash",
+  "qwen/qwen-2.5-coder-32b-instruct",
+  "meta-llama/llama-3.3-70b-instruct"
 ];
 
 const NOVA_SYSTEM_PROMPT = `
@@ -122,8 +122,7 @@ async function callGemini(prompt, options = {}) {
   // FIX: Raise token limit significantly for website generation
   // Website HTML+CSS+JS can easily require 4000-8000 tokens
   const maxOutputTokens =
-    options.maxOutputTokens || 2000;
-
+    options.maxOutputTokens || 8192;
   // FIX: Use lower temperature for JSON tasks to ensure reliable output
   const temperature =
     options.temperature !== undefined ? options.temperature : 0.7;
@@ -287,8 +286,10 @@ async function callGemini(prompt, options = {}) {
       );
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`Model ${model} request timed out after 20 seconds`)), 20000)
-      );
+       setTimeout(
+    () => reject(new Error("Gemini primary request timed out after 60 seconds")),
+    60000
+)
 
       const response = await Promise.race([fetchPromise, timeoutPromise]);
 
@@ -296,10 +297,11 @@ async function callGemini(prompt, options = {}) {
         const details =
           await response.text();
 
-        if (
-          response.status === 429 ||
-          response.status === 503
-        ) {
+       if (
+    response.status === 404 ||
+    response.status === 429 ||
+    response.status === 503
+) {
           console.log(
             `[callGemini] ${model} rate-limited (${response.status}), trying next model...`
           );
