@@ -301,7 +301,7 @@ async function callGemini(prompt, options = {}) {
         const details =
           await response.text();
 
-      if (response.status === 429 || response.status === 503) {
+      if (response.status === 404) {   throw new Error(`Model "${model}" not found.`); }  if (response.status === 429 || response.status === 503) {
           console.log(
             `[callGemini] ${model} rate-limited (${response.status}), trying next model...`
           );
