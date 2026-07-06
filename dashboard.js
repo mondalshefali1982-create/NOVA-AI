@@ -185,7 +185,7 @@ async function requireDashboardSession() {
   }
 
   try {
-    const data = await callNovaAuth(NOVA_API_ROUTES.auth, { method: "POST", body: JSON.stringify({ action: "me" }) });
+    const data = await callNovaAuth(NOVA_API_ROUTES.me, { method: "POST", body: JSON.stringify({ action: "me" }) });
     state.currentUser = data.user || null;
     return true;
   } catch {
@@ -570,7 +570,7 @@ async function logoutUser() {
 
   try {
     if (state.authToken) {
-      await callNovaAuth(NOVA_API_ROUTES.auth, { method: "POST", body: JSON.stringify({ action: "logout" }) }).catch(() => {});
+      await callNovaAuth(NOVA_API_ROUTES.logout, { method: "POST", body: JSON.stringify({ action: "logout" }) }).catch(() => {});
     }
   } finally {
     clearAuthSession();
