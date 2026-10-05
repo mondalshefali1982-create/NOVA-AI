@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Login to NOVA AI, an AI-powered productivity workspace created by Rohan Mondal.">
+  <meta name="theme-color" content="#060816">
+  <title>NOVA AI | Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page">
+  <div class="ambient-scene" aria-hidden="true">
+    <span class="aurora aurora-one"></span>
+    <span class="aurora aurora-two"></span>
+    <span class="aurora aurora-three"></span>
+    <span class="star-field"></span>
+  </div>
+
+  <main class="auth-shell">
+    <section class="auth-brand-panel">
+      <a class="brand auth-brand" href="login.html" aria-label="NOVA AI login">
+        <span class="brand-mark">N</span>
+        <span>NOVA AI</span>
+      </a>
+      <div>
+        <p class="eyebrow">Created by Rohan Mondal</p>
+        <h1>NOVA AI</h1>
+        <p class="auth-description">AI-powered productivity workspace with chat, voice assistant, cloud sync, smart memory, document generation, and more.</p>
+      </div>
+    </section>
+
+    <section class="auth-card" aria-label="NOVA AI authentication">
+      <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+        <button class="active" id="loginTab" type="button" role="tab" aria-selected="true">Login</button>
+        <button id="signupTab" type="button" role="tab" aria-selected="false">Signup</button>
+      </div>
+
+      <form class="login-form" id="loginForm">
+        <label id="nameField" hidden>
+          <span>Name</span>
+          <input id="authName" type="text" autocomplete="name" placeholder="Rohan Mondal">
+        </label>
+        <label>
+          <span>Email</span>
+          <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
+        </label>
+        <label>
+          <span>Password</span>
+          <input id="authPassword" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+        </label>
+        <button class="btn primary" id="authSubmit" type="submit">Login</button>
+      </form>
+
+      <p id="authMessage" class="auth-message" role="status">Use your NOVA AI account to continue.</p>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>
