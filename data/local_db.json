@@ -1,0 +1,67 @@
+{
+  "users": [
+    {
+      "id": "usr_rohan_default",
+      "_id": "usr_rohan_default",
+      "name": "Rohan Mondal",
+      "email": "rohan@example.com",
+      "password": "$2a$10$.vntC18UjX2x72BhaI2mS..a3nCk86mynftNWrXOb8IWev83.GNky",
+      "createdAt": "2026-10-20T11:00:26.274Z"
+    },
+    {
+      "id": "usr_1792494092494_74hqr",
+      "_id": "usr_1792494092494_74hqr",
+      "name": "Alex Rivera",
+      "email": "engineer_1792494092379@example.com",
+      "password": "$2a$10$wb0HQFZ.60qtvyJkacycWOQWDgXyKZuDDeESA9yzdDizL9HtYvNAC",
+      "createdAt": "2026-10-20T11:01:32.494Z"
+    },
+    {
+      "id": "usr_1792494359665_a0cfq",
+      "_id": "usr_1792494359665_a0cfq",
+      "name": "Alex Rivera",
+      "email": "engineer_1792494359517@example.com",
+      "password": "$2a$10$aWuHBX.R9m7/5sdlmBg/teTulCVXTWf2S9DNBy6MlRnw9FHZp8/aq",
+      "createdAt": "2026-10-20T11:05:59.665Z"
+    }
+  ],
+  "conversations": [
+    {
+      "id": "conv_1792494359694",
+      "title": "Full-Stack Architecture Session",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Design backend routing"
+        },
+        {
+          "role": "ai",
+          "content": "Architecture configured."
+        }
+      ],
+      "userId": "usr_rohan_default",
+      "updatedAt": "2026-10-20T11:05:59.696Z",
+      "createdAt": "2026-10-20T11:05:59.696Z"
+    },
+    {
+      "id": "conv_1792494092557",
+      "title": "Full-Stack Architecture Session",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Design backend routing"
+        },
+        {
+          "role": "ai",
+          "content": "Architecture configured."
+        }
+      ],
+      "userId": "usr_rohan_default",
+      "updatedAt": "2026-10-20T11:01:32.559Z",
+      "createdAt": "2026-10-20T11:01:32.559Z"
+    }
+  ],
+  "websites": [],
+  "videos": [],
+  "memories": []
+}
