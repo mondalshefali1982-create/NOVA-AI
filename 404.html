@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="description" content="404 — Coordinates Not Found. The requested sector on NOVA AI does not exist.">
+  <meta name="robots" content="noindex, follow">
+  <meta name="theme-color" content="#060816">
+  <title>404 — Page Not Found | NOVA AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .not-found-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    .not-found-card {
+      max-width: 580px;
+      width: 100%;
+      background: rgba(15, 23, 42, 0.8) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.16) !important;
+      backdrop-filter: blur(28px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+      border-radius: 32px !important;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+      padding: 56px 40px !important;
+    }
+    .not-found-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Space Grotesk", monospace;
+      font-size: 5rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #00d4ff 0%, #6366f1 50%, #d946ef 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 28px rgba(0, 212, 255, 0.4));
+      letter-spacing: -2px;
+    }
+    .not-found-card h1 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 14px;
+    }
+    .not-found-card p {
+      color: #94a3b8;
+      font-size: 1.05rem;
+      line-height: 1.65;
+      margin-bottom: 32px;
+    }
+    .not-found-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body class="auth-page">
+  <div class="ambient-scene" aria-hidden="true">
+    <span class="aurora aurora-one"></span>
+    <span class="aurora aurora-two"></span>
+    <span class="aurora aurora-three"></span>
+    <span class="star-field"></span>
+  </div>
+
+  <main class="not-found-shell">
+    <article class="not-found-card">
+      <div class="not-found-badge" aria-hidden="true">404</div>
+      <h1>Coordinates Unknown</h1>
+      <p>The cosmic sector or resource you were trying to navigate to does not exist, has shifted in orbit, or has been relocated.</p>
+      <div class="not-found-actions">
+        <a class="btn primary" href="index.html">Return to Home</a>
+        <a class="btn secondary" href="dashboard.html">Launch Dashboard</a>
+      </div>
+    </article>
+  </main>
+</body>
+</html>
